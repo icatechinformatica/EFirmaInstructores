@@ -4,10 +4,9 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class tbl_cursos extends Model {
-
+class agenda extends Model
+{
     protected $connection = "pgsql";
 
-    protected $table = 'tbl_cursos';
-
+    protected $table = 'agenda';
 }

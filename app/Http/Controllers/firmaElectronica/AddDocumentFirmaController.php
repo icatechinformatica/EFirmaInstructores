@@ -150,7 +150,7 @@ class AddDocumentFirmaController extends Controller {
                     $md5 = md5_file($request->file('doc'), false);
 
                     $text = Pdf::getText($request->file('doc'), 'c:/Program Files/Git/mingw64/bin/pdftotext');
-                    $text = str_replace(["\r", "\n", "\f"], ' ', $text);
+                    $text = str_replace(["\r", "\n", "\f"], ' ', $text); dd($text);
 
                     // otro metodo para leer el pddf
                     // $reader = new \Asika\Pdf2text;

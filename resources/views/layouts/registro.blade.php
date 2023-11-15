@@ -44,6 +44,21 @@
                                 </div>
                             </div>
 
+                            <div class="form-group row">
+                                <label for="curp" class="col-md-4 col-form-label text-md-right">{{ __('CURP') }}</label>
+
+                                <div class="col-md-6">
+                                    <input id="curp" type="text" class="form-control @error('curp') is-invalid @enderror"
+                                        name="curp" value="{{ old('curp') }}" required autocomplete="curp" autofocus>
+
+                                    @error('curp')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
+                                </div>
+                            </div>
+
                             {{-- organo --}}
                             {{-- <div class="form-group row">
                                 <label for="Organo"

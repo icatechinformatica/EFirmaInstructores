@@ -41,11 +41,13 @@ Route::post('/Permisos/guardar', 'PermisosController@store')->name('permisos.sto
 Route::get('/Calificaciones/inicio', 'calificaciones\CalificacionesController@index')->name('calificaciones.inicio');
 Route::post('/Calificaciones/guardar', 'calificaciones\CalificacionesController@update')->name('calificaciones.guardar');
 Route::post('/Calificaciones/pdf', 'calificaciones\CalificacionesController@calificaciones')->name('calificaciones.pdf');
+Route::post('/Calificaciones/enviar', 'calificaciones\CalificacionesController@calificacionEnviar')->name('calificacion.enviar');
 
 // lista de asistencia
 Route::get('/Asistencia/inicio', 'asistencia\AsistenciaController@index')->name('asistencia.inicio');
 Route::post('/Asistencia/guardar', 'asistencia\AsistenciaController@update')->name('asistencia.guardar');
 Route::post('/Asistencia/pdf', 'asistencia\AsistenciaController@asistenciaPdf')->name('asistencia.pdf');
+Route::post('/Asistencia/enviar', 'asistencia\AsistenciaController@asistenciaEnviar')->name('asistencia.enviar');
 
 // agregar documento para firmar
 Route::get('/AddDocumentfirma/inicio', 'firmaElectronica\AddDocumentFirmaController@index')->name('addDocument.inicio');

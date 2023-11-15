@@ -4,6 +4,7 @@ namespace App\Http\Controllers\asistencia;
 
 use PDF;
 use App\tbl_cursos;
+use App\agenda;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
@@ -27,16 +28,27 @@ class AsistenciaController extends Controller
         else $clave = session('claveAsis');
         $curso = tbl_cursos::where('clave', '=', $clave)->first();
 
-        $dias = [];
-        $alumnos = [];
+        $dias = $dias_agenda = $alumnos = [];
         $fecha_valida = NULL;
         $fecha_hoy = date("d-m-Y");
+
         if ($curso) {
-            if ($curso->id_instructor != Auth::user()->id_sivyc) {
+
+            $agenda = agenda::Where('id_curso', $curso->folio_grupo)->Select('start')->Get();
+            foreach ($agenda as $item) {
+                $temporal = explode(' ', $item->start);
+                array_push($dias_agenda, $temporal[0]);
+            }
+
+            if ($curso->curp == Auth::user()->curp) {
                 $inicio = $curso->inicio;
                 $termino = $curso->termino;
                 for ($i = $inicio; $i <= $termino; $i = date("Y-m-d", strtotime($i . "+ 1 days"))) {
-                    array_push($dias, $i);
+                    foreach($dias_agenda as $moist) {
+                        if($i == $moist) {
+                            array_push($dias, $i);
+                        }
+                    }
                 }
 
                 if (Auth::user()->unidad == 1) $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 3 days"));
@@ -150,7 +162,7 @@ class AsistenciaController extends Controller
 
                     } else  return "El Curso no tiene registrado la fecha de inicio y de termino";
 
-                    tbl_cursos::where('id', $curso->id)->update(['asis_finalizado' => true]);
+                    // tbl_cursos::where('id', $curso->id)->update(['asis_finalizado' => true]);
 
                     $pdf = PDF::loadView('layouts.asistencia.reporteAsistencia', compact('curso', 'alumnos', 'mes', 'consec', 'meses'));
                     $pdf->setPaper('Letter', 'landscape');
@@ -160,6 +172,31 @@ class AsistenciaController extends Controller
                     // if ($fecha_valida < 0) $message = "No prodece el registro de calificaciones, la fecha de termino del curso es el $curso->termino.";
                 } // else $message = "El Curso fué $curso->status y turnado a $curso->turnado.";
             }
+        }
+    }
+
+    public function asistenciaEnviar(Request $request) {
+        $clave = $request->clave3;
+        if ($clave) {
+            // $curso = tbl_cursos::where('clave', '=', $clave)->first();
+            $curso = DB::connection('pgsql')->table('tbl_cursos')->select(
+                'tbl_cursos.*',
+                DB::raw('right(clave,4) as grupo'),
+                'inicio',
+                'termino',
+                DB::raw("to_char(inicio, 'DD/MM/YYYY') as fechaini"),
+                DB::raw("to_char(termino, 'DD/MM/YYYY') as fechafin"),
+                'u.plantel',
+                )->where('clave',$clave);
+            $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first();
+            if ($curso) {
+                if ($curso->turnado == "UNIDAD" and $curso->status != "REPORTADO" and $curso->status != "CANCELADO") {
+                    tbl_cursos::where('id', $curso->id)->update(['asis_finalizado' => true]);
+                    return redirect()->route('asistencia.inicio')->with('success', 'ASISTENCIAS ENVIADAS EXITOSAMENTE!');
+                }
+                return redirect()->route('asistencia.inicio')->with('alert', 'EL ENVIO DE ASISTENCIAS FUE ABORTADO. EL CURSO YA ESTA REPORTADO Y/O CANCELADO!');
+            }
+            return redirect()->route('asistencia.inicio')->with('alert', 'EL ENVIO DE ASISTENCIAS FUE ABORTADO, INTENTELO DE NUEVO MAS TARDE');
         }
     }
 

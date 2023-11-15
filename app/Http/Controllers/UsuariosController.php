@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class UsuariosController extends Controller {
-    
+
     public function index(Request $request) {
         if($request->busqueda != null) {
             $users = DB::table('users')->where('users.id', '!=', 1)
@@ -20,7 +20,7 @@ class UsuariosController extends Controller {
                 ->select('users.*', 'organos.descripcion', 'org.descripcion as descripcion2')->get(); */
             $users = DB::table('users')->get();
         }
-        
+
         $roles = DB::table('roles')->where('id', '!=', 5)->get();
         $permisos = DB::table('model_has_roles')->get();
 

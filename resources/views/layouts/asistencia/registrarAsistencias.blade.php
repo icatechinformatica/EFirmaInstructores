@@ -38,6 +38,11 @@
                 <p>{{ $messages }}</p>
             </div>
         @endif
+        @if (isset($curso) && $curso->observacion_asistencia_rechazo != null && $curso->asis_finalizado == FALSE)
+            <div class="alert alert-danger">
+                <p>{{ $curso->observacion_asistencia_rechazo }}</p>
+            </div>
+        @endif
 
         {{ Form::open(['route' => 'asistencia.inicio', 'method' => 'get', 'id'=>'frm']) }}
         {{csrf_field()}}
@@ -142,7 +147,8 @@
                                 <div class="col d-flex justify-content-end mt-2">
                                     <button id="btnLista" type="button" class="btn btn-outline-info mr-2">GENERAR LISTA DE ASISTENCIA</button>
                                     @if (!$curso->asis_finalizado)
-                                        <button id="btnGuardar" type="button" class="btn btn-outline-success">GUARDAR ASISTENCIAS</button>
+                                        <button id="btnGuardar" type="button" class="btn btn-outline-success mr-2">GUARDAR ASISTENCIAS</button>
+                                        <button id="btnEnviar" type="button" class="btn btn-outline-danger">ENVIAR A UNIDAD</button>
                                     @endif
                                 </div>
                             </div>
@@ -161,6 +167,10 @@
             @csrf
             <input class="d-none" type="text" name="clave2" id="clave2" value="{{$clave}}">
         </form>
+        <form id="frmEnviar" action="{{route('asistencia.enviar')}}" method="post">
+            @csrf
+            <input class="d-none" type="text" name="clave3" id="clave3" value="{{$clave}}">
+        </form>
     </div>
 
 @endsection
@@ -178,14 +188,28 @@
         $('#btnLista').click(function () {
             var asis_finalizado = $('#asis_finalizado').val();
             if (!asis_finalizado) {
-                if(confirm('¿Esta seguro de generar la lista de asistencia? \n Ya no podra modificar las asistencias despues.') == true) {
+                // if(confirm('¿Esta seguro de generar la lista de asistencia? \n Ya no podra modificar las asistencias despues.') == true) {
                     $('#frmPdf').attr('target', "_blanck");
                     $('#frmPdf').submit();
-                    $('#btnGuardar').addClass('d-none');
-                }
+                    // $('#btnGuardar').addClass('d-none');
+                // }
             } else {
                 $('#frmPdf').attr('target', "_blanck");
                 $('#frmPdf').submit();
+            }
+
+        });
+
+        $('#btnEnviar').click(function () {
+            var asis_finalizado = $('#asis_finalizado').val();
+            if (!asis_finalizado) {
+                if(confirm('¿Esta seguro de enviar la lista de asistencia? \n Ya no podra modificar las asistencias despues.') == true) {
+                    $('#btnGuardar').addClass('d-none');
+                    $('#btnEnviar').addClass('d-none');
+                    $('#frmEnviar').submit();
+                }
+            } else {
+                $('#frmEnviar').submit();
             }
 
         });
