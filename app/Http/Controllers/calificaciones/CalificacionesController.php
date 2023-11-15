@@ -74,6 +74,26 @@ class CalificacionesController extends Controller {
         return redirect('/Calificaciones/inicio')->with(['message'=>$message, 'clave'=>$clave]);
     }
 
+    public function calificacionEnviar(Request $request) {
+        $clave = $request->clave3;
+        if($clave) {
+            $curso = DB::connection('pgsql')->table('tbl_cursos')->select(
+                'tbl_cursos.*',
+                DB::raw('right(clave,4) as grupo'),
+                DB::raw("to_char(inicio, 'DD/MM/YYYY') as fechaini"),
+                DB::raw("to_char(termino, 'DD/MM/YYYY') as fechafin"),
+                'u.plantel'
+            )->where('clave',$clave);
+            $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first();
+            if($curso) {
+                tbl_cursos::where('id', $curso->id)->update(['calif_finalizado' => true]);
+                return redirect()->route('calificaciones.inicio')->with('success', 'CALIFICACIONES ENVIADAS EXITOSAMENTE!');
+            } else return "Curso no v&aacute;lido para esta Unidad";
+        }
+        return "Clave no v&aacute;lida";
+        dd($request);
+    }
+
     public function calificaciones(Request $request) {
         $clave = $request->get('clavePDF');
         if($clave) {
@@ -103,13 +123,11 @@ class CalificacionesController extends Controller {
                     exit;
                 }
 
-                tbl_cursos::where('id', $curso->id)->update(['calif_finalizado' => true]);
-
                 $consec = 1;
                 $pdf = PDF::loadView('layouts.calificaciones.pdfCalificaciones', compact('curso','alumnos','consec'));
                 $pdf->setPaper('Letter', 'landscape');
                 $file = "CALIFICACIONES_$clave.PDF";
-                return $pdf->download($file);
+                return $pdf->stream($file);
             } else return "Curso no v&aacute;lido para esta Unidad";
         }
         return "Clave no v&aacute;lida";

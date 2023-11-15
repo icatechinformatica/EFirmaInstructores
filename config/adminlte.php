@@ -281,13 +281,13 @@ return [
             // 'can' => 'permiso.inicio',
             'icon_color' => 'color_icono'
         ],
-        [
-            'text' => 'Agregar Documento',
-            'route'  => 'addDocument.inicio',
-            'icon' => 'fa fa-file',
-            // 'can' => 'permiso.inicio',
-            'icon_color' => 'color_icono'
-        ],
+        // [
+        //     'text' => 'Agregar Documento',
+        //     'route'  => 'addDocument.inicio',
+        //     'icon' => 'fa fa-file',
+        //     // 'can' => 'permiso.inicio',
+        //     'icon_color' => 'color_icono'
+        // ],
         [
             'text' => 'Firma Electronica',
             'route'  => 'firma.inicio',
@@ -295,7 +295,7 @@ return [
             // 'can' => 'permiso.inicio',
             'icon_color' => 'color_icono'
         ],
-        
+
 
         /* [
             'type' => 'sidebar-menu-search',

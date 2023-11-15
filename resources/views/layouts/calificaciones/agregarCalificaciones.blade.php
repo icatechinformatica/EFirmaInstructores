@@ -21,6 +21,11 @@
                 </div>
             </div>
         @endif
+        @if (isset($curso) && $curso->observacion_calificacion_rechazo != null && $curso->calif_finalizado == FALSE)
+        <div class="alert alert-danger">
+            <p>{{ $curso->observacion_calificacion_rechazo }}</p>
+        </div>
+        @endif
 
         {{ Form::open(['route' => 'calificaciones.inicio', 'method' => 'get', 'id'=>'frm']) }}
         {{csrf_field()}}
@@ -112,7 +117,8 @@
                                                     <input class="d-none" type="text" id="calif_finalizado" value="{{$curso->calif_finalizado}}">
                                                     {{ Form::button('GENERAR LISTA DE CALIFICACIONES', ['id' => 'reporte', 'class' => 'btn btn-outline-info']) }}
                                                     @if (!$curso->calif_finalizado)
-                                                        {{ Form::button('GUARDAR CAMBIOS', ['id' => 'guardar', 'class' => 'btn btn-outline-success']) }} 
+                                                        {{ Form::button('GUARDAR CAMBIOS', ['id' => 'guardar', 'class' => 'btn btn-outline-success']) }}
+                                                        <button id="btnEnviar" type="button" class="btn btn-outline-danger">ENVIAR A UNIDAD</button>
                                                     @endif
                                                 </td>
                                             @endif
@@ -126,41 +132,56 @@
             </div>
         </div>
         {!! Form::close() !!}
-        
+
         <form id="formPDF" action="{{route('calificaciones.pdf')}}" method="post" target="_blanck">
             @csrf
             <input id="clavePDF" name="clavePDF" class="d-none" type="text" value="{{$clave}}">
+        </form>
+        <form id="frmEnviar" action="{{route('calificacion.enviar')}}" method="post">
+            @csrf
+            <input class="d-none" type="text" name="clave3" id="clave3" value="{{$clave}}">
         </form>
     </div>
 
 @endsection
 
-@section('js') 
+@section('js')
     <script language="javascript">
-        $(document).ready(function(){                
+        $(document).ready(function(){
             $("#guardar").click(function(){
                 if(confirm("¿Está seguro de guardar las calificaciones?")==true){
                     $('#frm').attr('action', "{{route('calificaciones.guardar')}}");
-                    $('#frm').attr('method', "post"); 
-                    $('#frm').submit(); 
+                    $('#frm').attr('method', "post");
+                    $('#frm').submit();
                 }
-            });             
+            });
 
-            $('.numero').keyup(function (){                    
+            $('.numero').keyup(function (){
                 this.value = (this.value + '').replace(/[^0-9NP]/g, '');
             });
-        });    
+        });
 
         $('#reporte').click(function () {
             var calif_finalizado = $('#calif_finalizado').val();
             if (!calif_finalizado) {
-                if(confirm("¿Está seguro de generar la lista de calificaciones? \n Ya no podra modificar las calificaciones despues.")==true){
-                    $('#formPDF').submit(); 
-                    $('#guardar').addClass('d-none');
-                }
+                    $('#formPDF').submit();
             } else {
                 $('#formPDF').submit();
             }
-        });   
-    </script>  
+        });
+
+        $('#btnEnviar').click(function () {
+            var asis_finalizado = $('#asis_finalizado').val();
+            if (!asis_finalizado) {
+                if(confirm('¿Esta seguro de enviar la lista de calificaciones? \n Ya no podra modificar las calificaciones despues.') == true) {
+                    $('#btnGuardar').addClass('d-none');
+                    $('#btnEnviar').addClass('d-none');
+                    $('#frmEnviar').submit();
+                }
+            } else {
+                $('#frmEnviar').submit();
+            }
+
+        });
+    </script>
 @endsection
