@@ -25,9 +25,9 @@ class RegistroController extends Controller {
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        $id_instructor = instructores::Select('id')->Where('correo', $request->email)->First();
+        $id_instructor = instructores::Select('id')->Where('curp', $request->curp)->First();
         if($id_instructor == null) {
-            return redirect()->route('registro.inicio')->with('warning', 'No se encontro el instructor en el SIVyC');
+            return redirect()->route('registro.inicio')->with('alert', 'No se encontro el instructor en el SIVyC, la CURP es erronea');
         }
 
         // $organo = DB::table('organos')->where('id', '=', $request->organo)->get();
