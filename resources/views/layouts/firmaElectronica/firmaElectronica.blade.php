@@ -62,7 +62,7 @@
                             <div class="nav nav-tabs nav-fill" id="nav-tab" role="tablist">
                                 <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">Por Firmar</a>
                                 <a class="nav-item nav-link" id="nav-firmados-tab" data-toggle="tab" href="#nav-firmados" role="tab" aria-controls="nav-firmados" aria-selected="false">Firmados</a>
-                                <a class="nav-item nav-link" id="nav-validados-tab" data-toggle="tab" href="#nav-validados" role="tab" aria-controls="nav-validados" aria-selected="false">Validados</a>
+                                <a class="nav-item nav-link" id="nav-validados-tab" data-toggle="tab" href="#nav-validados" role="tab" aria-controls="nav-validados" aria-selected="false">Sellados</a>
                                 <a style="color: #FF5733" class="nav-item nav-link" id="nav-cancelados-tab" data-toggle="tab" href="#nav-cancelados" role="tab" aria-controls="nav-cancelados" aria-selected="false">Cancelados</a>
                             </div>
                         </nav>
@@ -110,14 +110,31 @@
                                                     <tr>
                                                         <td><small>{{$nameArchivo}}</small></td>
                                                         <td>
-                                                            <a href="{{ $docFirmar->link_pdf }}" target="_blank" rel="{{ $docFirmar->link_pdf }}">
-                                                                <img class="rounded" src="{{ asset('img/pdf.png') }}" alt="{{ asset('img/pdf.png') }}" width="30px" height="30px">
-                                                            </a>
+
+                                                            @switch($docFirmar->tipo_archivo)
+                                                                @case('Lista de asistencia')
+                                                                    <form id="frmPdf" action="{{route('asistencia.pdf')}}" method="post" target="_blank">
+                                                                        @csrf
+                                                                        <input class="d-none" type="text" name="clave2" value="{{$docFirmar->numero_o_clave}}">
+                                                                        <button type="submit" class="btn mr-2"> <img class="rounded" src="{{ asset('img/pdf.png') }}" alt="{{ asset('img/pdf.png') }}" width="30px" height="30px"></button>
+                                                                    </form>
+                                                                @break
+                                                                @case('Lista de calificaciones')
+                                                                    <form id="frmPdf" action="{{route('calificaciones.pdf')}}" method="post" target="_blank">
+                                                                        @csrf
+                                                                        <input class="d-none" type="text" name="clavePDF" value="{{$docFirmar->numero_o_clave}}">
+                                                                        <button type="submit" class="btn mr-2"> <img class="rounded" src="{{ asset('img/pdf.png') }}" alt="{{ asset('img/pdf.png') }}" width="30px" height="30px"></button>
+                                                                    </form>
+                                                                @break
+                                                                @default {{-- Contratos --}}
+                                                                    <button type="button" onclick="descargarDocumento('{{$docFirmar->id}}')" class="btn mr-2"><img class="rounded" src="{{ asset('img/pdf.png') }}" alt="{{ asset('img/pdf.png') }}" width="30px" height="30px"></button>
+                                                                @break
+                                                            @endswitch
                                                         </td>
                                                         <td><small>{{$firmantes}}</small></td>
                                                         <td><small>{{$docFirmar->created_at->format('d-m-Y')}}</small></td>
                                                         <td>
-                                                            <button class="btn btn-outline-danger" type="button" onclick="cancelarDocumento('{{$docFirmar->id}}', '{{$nameArchivo}}', '{{$docFirmar->tipo_archivo}}', '{{$docFirmar->numero_o_clave}}')">Cancelar</button>
+                                                            {{-- <button class="btn btn-outline-danger" type="button" onclick="cancelarDocumento('{{$docFirmar->id}}', '{{$nameArchivo}}', '{{$docFirmar->tipo_archivo}}', '{{$docFirmar->numero_o_clave}}')">Cancelar</button> --}}
                                                         </td>
                                                         <td>
                                                             <button class="btn btn-outline-primary" href="#" data-toggle="modal" data-target="#mdlLoadViewSignature" onclick="abriModal('{{$key}}')">firmar</button>
@@ -180,25 +197,44 @@
                                                     <tr>
                                                         <td><small>{{$nameArchivo}}</small></td>
                                                         <td>
-                                                            <a href="{{ $docFirmado->link_pdf }}" target="_blank" rel="{{ $docFirmado->link_pdf }}">
+                                                            @switch($docFirmado->tipo_archivo)
+                                                                @case('Lista de asistencia')
+                                                                    <form id="frmPdf" action="{{route('asistencia.pdf')}}" method="post" target="_blank">
+                                                                        @csrf
+                                                                        <input class="d-none" type="text" name="clave2" value="{{$docFirmado->numero_o_clave}}">
+                                                                        <button type="submit" class="btn mr-2"> <img class="rounded" src="{{ asset('img/pdf.png') }}" alt="{{ asset('img/pdf.png') }}" width="30px" height="30px"></button>
+                                                                    </form>
+                                                                @break
+                                                                @case('Lista de calificaciones')
+                                                                    <form id="frmPdf" action="{{route('calificaciones.pdf')}}" method="post" target="_blank">
+                                                                        @csrf
+                                                                        <input class="d-none" type="text" name="clavePDF" value="{{$docFirmado->numero_o_clave}}">
+                                                                        <button type="submit" class="btn mr-2"> <img class="rounded" src="{{ asset('img/pdf.png') }}" alt="{{ asset('img/pdf.png') }}" width="30px" height="30px"></button>
+                                                                    </form>
+                                                                @break
+                                                                @default {{-- Contratos --}}
+                                                                    <button type="button" onclick="descargarDocumento('{{$docFirmado->id}}')" class="btn mr-2"><img class="rounded" src="{{ asset('img/pdf.png') }}" alt="{{ asset('img/pdf.png') }}" width="30px" height="30px"></button>
+                                                                @break
+                                                            @endswitch
+                                                            {{-- <a href="{{ $docFirmado->link_pdf }}" target="_blank" rel="{{ $docFirmado->link_pdf }}">
                                                                 <img class="rounded" src="{{ asset('img/pdf.png') }}" alt="{{ asset('img/pdf.png') }}" width="30px" height="30px">
-                                                            </a>
+                                                            </a> --}}
                                                         </td>
                                                         <td><small>{{$firmantes}}</small></td>
                                                         <td><small>{{$docFirmado->created_at->format('d-m-Y')}}</small></td>
                                                         <td>
-                                                            <button type="button" onclick="cancelarDocumento('{{$docFirmado->id}}', '{{$nameArchivo}}', '{{$docFirmado->tipo_archivo}}', '{{$docFirmado->numero_o_clave}}')" class="btn btn-outline-danger">Cancelar</button>
+                                                            {{-- <button type="button" onclick="cancelarDocumento('{{$docFirmado->id}}', '{{$nameArchivo}}', '{{$docFirmado->tipo_archivo}}', '{{$docFirmado->numero_o_clave}}')" class="btn btn-outline-danger">Cancelar</button> --}}
                                                         </td>
                                                         <td>
-                                                            @if ($obj2['emisor']['_attributes']['email'] == $email)
-                                                                @if ($sendValidation)
-                                                                    <button type="button" onclick="validardocumento('{{$docFirmado->id}}')" class="btn btn-outline-primary">Validar</button>
-                                                                @else
-                                                                    Faltan Firmas
-                                                                @endif
+                                                            {{-- @if ($obj2['emisor']['_attributes']['email'] == $email) --}}
+                                                            @if ($sendValidation)
+                                                                Listo para Sellado
                                                             @else
-                                                                No disponible
+                                                                Faltan Firmas
                                                             @endif
+                                                            {{-- @else
+                                                                No disponible
+                                                            @endif --}}
                                                         </td>
                                                     </tr>
                                                 @endforeach
@@ -249,10 +285,29 @@
                                                         <td><small>{{$docValidado->created_at->format('d-m-Y')}}</small></td>
                                                         <td><small>{{$docValidado->fecha_sellado}}</small></td>
                                                         <td>
-                                                            <button type="button" onclick="cancelarDocumento('{{$docValidado->id}}', '{{$nameArchivo}}', '{{$docValidado->tipo_archivo}}', '{{$docValidado->numero_o_clave}}')" class="btn btn-outline-danger">Cancelar</button>
+                                                            {{-- <button type="button" onclick="cancelarDocumento('{{$docValidado->id}}', '{{$nameArchivo}}', '{{$docValidado->tipo_archivo}}', '{{$docValidado->numero_o_clave}}')" class="btn btn-outline-danger">Cancelar</button> --}}
                                                         </td>
                                                         <td>
-                                                            <button type="button" onclick="descargarDocumento('{{$docValidado->id}}')" class="btn btn-outline-success">Descargar</button>
+                                                            @switch($docValidado->tipo_archivo)
+                                                                @case('Lista de asistencia')
+                                                                    <form id="frmPdf" action="{{route('asistencia.pdf')}}" method="post" target="_blank">
+                                                                        @csrf
+                                                                        <input class="d-none" type="text" name="clave2" value="{{$docValidado->numero_o_clave}}">
+                                                                        <button type="submit" class="btn mr-2"> <img class="rounded" src="{{ asset('img/pdf.png') }}" alt="{{ asset('img/pdf.png') }}" width="30px" height="30px"></button>
+                                                                    </form>
+                                                                @break
+                                                                @case('Lista de calificaciones')
+                                                                    <form id="frmPdf" action="{{route('calificaciones.pdf')}}" method="post" target="_blank">
+                                                                        @csrf
+                                                                        <input class="d-none" type="text" name="clavePDF" value="{{$docValidado->numero_o_clave}}">
+                                                                        <button type="submit" class="btn mr-2"> <img class="rounded" src="{{ asset('img/pdf.png') }}" alt="{{ asset('img/pdf.png') }}" width="30px" height="30px"></button>
+                                                                    </form>
+                                                                @break
+                                                                @default {{-- Contratos --}}
+                                                                    <button type="button" onclick="descargarDocumento('{{$docValidado->id}}')" class="btn mr-2"><img class="rounded" src="{{ asset('img/pdf.png') }}" alt="{{ asset('img/pdf.png') }}" width="30px" height="30px"></button>
+                                                                @break
+                                                            @endswitch
+                                                            {{-- <button type="button" onclick="descargarDocumento('{{$docValidado->id}}')" class="btn btn-outline-success">Descargar</button> --}}
                                                         </td>
                                                     </tr>
                                                 @endforeach
@@ -368,10 +423,12 @@
                 <input class="d-none" id="txtIdFirmado" name="txtIdFirmado" type="text">
             </form>
 
-            <form id="formGenerarPDF" action="{{route('firma.generarPdf')}}" method="post">
+            <form id="formGenerarPDF" action="{{route('firma.generarPdf')}}" method="post" target="_blank">
                 @csrf
                 <input class="d-none" id="txtIdGenerar" name="txtIdGenerar" type="text">
             </form>
+
+
         </div>
     </div>
 
@@ -520,6 +577,13 @@
             $('#txtClave').val(clave);
             $('#modalCancel').modal('toggle');
         }
+
+        $('#btnLista').click(function () {
+                $('#frmPdf').attr('target', "_blanck");
+                $('#clave2').attr('value', $('#frmPdf'));
+                $('#frmPdf').submit();
+
+        });
 
     </script>
 
