@@ -71,7 +71,7 @@
     <body>
         <footer>
             {{-- <div style="display: inline-block; width: 50%;"></div> --}}
-            <div class="page-number"><small class="link">Sello Digital: | GUID: {{$uuid}} | Sello: {{$cadena_sello}} | Fecha: {{$fecha_sello}} <br> Este documento ha sido Firmado Electrónicamente, teniendo el mismo valor que la firma autógrafa de acuerdo a los Artículos 1, 3, 8 y 11 de la Ley de Firma Electrónica Avanzada del Estado de Chiapas </small></div>
+            {{-- <div class="page-number"><small class="link">Sello Digital: | GUID: {{$uuid}} | Sello: {{$cadena_sello}} | Fecha: {{$fecha_sello}} <br> Este documento ha sido Firmado Electrónicamente, teniendo el mismo valor que la firma autógrafa de acuerdo a los Artículos 1, 3, 8 y 11 de la Ley de Firma Electrónica Avanzada del Estado de Chiapas </small></div> --}}
         </footer>
         <div class= "container g-pt-30" style="font-size: 12px; margin-bottom: 25px;" >
             <div id="content">
@@ -155,7 +155,52 @@
                 </div>
                 <br>
                 <div align=justify>
-                    <table style="font:9px;">
+                    <table>
+                        <tr>
+                            <td colspan="2"><p align="center"><b>"ICATECH"</b></p></td>
+                            <td colspan="2"><p align="center"><b>"PRESTADOR DE SERVICIOS"</b></p></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><div align="center"><br><br></td></div>
+                            <td colspan="2"><div align="center"><br><br></td></div>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><div align="center"><b>{{$director->nombre}} {{$director->apellidoPaterno}} {{$director->apellidoMaterno}}</b></td></div>
+                            <td colspan="2"><div align="center"><b>C. {{$nomins}}</b></td></div>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><div align="center"><b>{{$director->puesto}} DE CAPACITACIÓN {{$data_contrato->unidad_capacitacion}}</b></td></div>
+                            <td colspan="2"><div align="center"></td></div>
+                        </tr>
+                    </table>
+                    <p align="center"><b>"TESTIGOS"</b></p>
+                    <br><br>
+                    <table>
+                        <tr>
+                            <td colspan="2"><p align="center"></p></td>
+                            <td colspan="2"><p align="center"></p></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><div align="center"><b>{{$testigo1->nombre}} {{$testigo1->apellidoPaterno}} {{$testigo1->apellidoMaterno}}</b></td></div>
+                            <td colspan="2"><div align="center"><b>{{$testigo2->nombre}} {{$testigo2->apellidoPaterno}} {{$testigo2->apellidoMaterno}}</b></td></div>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><div align="center"><b>{{$testigo1->puesto}}</b></td></div>
+                            <td colspan="2"><div align="center"><b>{{$testigo2->puesto}}</b></td></div>
+                        </tr>
+                    </table>
+                    <div align=center>
+                        <br>
+                        <br/>
+                        <br>________________________________________
+                        <br><small><b>{{$testigo3->nombre}} {{$testigo3->apellidoPaterno}} {{$testigo3->apellidoMaterno}}</b></small>
+                        <br><small><b>{{$testigo3->puesto}}</b> </small></b>
+                    </div>
+                    <br>
+                    <div align=justify>
+                        <small  style="font-size: 10px;">Las Firmas que anteceden corresponden al Contrato de prestación de servicios profesionales por honorarios en su modalidad de horas curso No. {{$data_contrato->numero_contrato}}, que celebran por una parte el Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas, representado por el (la) C. {{$director->nombre}} {{$director->apellidoPaterno}} {{$director->apellidoMaterno}}, {{$director->puesto}} DE CAPACITACIÓN {{$data_contrato->unidad_capacitacion}}, y el (la) C. {{$nomins}}, en el Municipio de {{$data_contrato->municipio}}, a {{$D}} de {{$M}} del año {{$Y}}.</small>
+                    </div>
+                    {{-- <table style="font:9px;">
                         @foreach ($objeto['firmantes']['firmante'][0] as $key=>$moist)
                             @if($key == 2)
                             <tr><td height="70px;"></td></tr>
@@ -192,7 +237,7 @@
                                 Las Firmas que anteceden corresponden al Contrato de prestación de servicios profesionales por honorarios en su modalidad de horas curso No. {{$data_contrato->numero_contrato}}, que celebran por una parte el Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas, representado por el (la) C. {{$director->nombre}} {{$director->apellidoPaterno}} {{$director->apellidoMaterno}}, {{$director->puesto}} DE CAPACITACIÓN {{$data_contrato->unidad_capacitacion}}, y el (la) C. {{$nomins}}, en el Municipio de {{$data_contrato->municipio}}, a {{$D}} de {{$M}} del año {{$Y}}.
                             </td>
                         </tr>
-                    </table>
+                    </table> --}}
                 </div>
             </div>
         </div>

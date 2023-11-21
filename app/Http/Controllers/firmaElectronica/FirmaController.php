@@ -108,7 +108,7 @@ class FirmaController extends Controller {
         $documento = DocumentosFirmar::where('id', $request->idFile)->first();
 
         $obj_documento = json_decode($documento->obj_documento, true);
-        $obj_documento_interno = json_decode($documento->obj_documento_interno, true);
+        // $obj_documento_interno = json_decode($documento->obj_documento_interno, true);
 
         if (empty($obj_documento['archivo']['_attributes']['md5_archivo'])) {
             $obj_documento['archivo']['_attributes']['md5_archivo'] = $documento->md5_file;
@@ -123,20 +123,20 @@ class FirmaController extends Controller {
                 $obj_documento['firmantes']['firmante'][0][$key] = $value;
             }
         }
-        foreach ($obj_documento_interno['firmantes']['firmante'][0] as $key => $value) {
-            if ($value['_attributes']['curp_firmante'] == $request->curp) {
-                $value['_attributes']['fecha_firmado_firmante'] = $request->fechaFirmado;
-                $value['_attributes']['no_serie_firmante'] = $request->serieFirmante;
-                $value['_attributes']['firma_firmante'] = $request->firma;
-                $value['_attributes']['certificado'] = $request->certificado;
-                $obj_documento_interno['firmantes']['firmante'][0][$key] = $value;
-            }
-        }
+        // foreach ($obj_documento_interno['firmantes']['firmante'][0] as $key => $value) {
+        //     if ($value['_attributes']['curp_firmante'] == $request->curp) {
+        //         $value['_attributes']['fecha_firmado_firmante'] = $request->fechaFirmado;
+        //         $value['_attributes']['no_serie_firmante'] = $request->serieFirmante;
+        //         $value['_attributes']['firma_firmante'] = $request->firma;
+        //         $value['_attributes']['certificado'] = $request->certificado;
+        //         $obj_documento_interno['firmantes']['firmante'][0][$key] = $value;
+        //     }
+        // }
 
         $array = XmlToArray::convert($documento->documento);
-        $array2 = XmlToArray::convert($documento->documento_interno);
+        // $array2 = XmlToArray::convert($documento->documento_interno);
         $array['DocumentoChis']['firmantes'] = $obj_documento['firmantes'];
-        $array2['DocumentoChis']['firmantes'] = $obj_documento_interno['firmantes'];
+        // $array2['DocumentoChis']['firmantes'] = $obj_documento_interno['firmantes'];
 
         $result = ArrayToXml::convert($obj_documento, [
             'rootElementName' => 'DocumentoChis',
@@ -151,25 +151,25 @@ class FirmaController extends Controller {
             ],
         ]);
 
-        $result2 = ArrayToXml::convert($obj_documento_interno, [
-            'rootElementName' => 'DocumentoChis',
-            '_attributes' => [
-                'version' => $array2['DocumentoChis']['_attributes']['version'],
-                'fecha_creacion' => $array2['DocumentoChis']['_attributes']['fecha_creacion'],
-                'no_oficio' => $array2['DocumentoChis']['_attributes']['no_oficio'],
-                'dependencia_origen' => $array2['DocumentoChis']['_attributes']['dependencia_origen'],
-                'asunto_docto' => $array2['DocumentoChis']['_attributes']['asunto_docto'],
-                'tipo_docto' => $array2['DocumentoChis']['_attributes']['tipo_docto'],
-                'xmlns' => 'http://firmaelectronica.chiapas.gob.mx/GCD/DoctoGCD',
-            ],
-        ]);
+        // $result2 = ArrayToXml::convert($obj_documento_interno, [
+        //     'rootElementName' => 'DocumentoChis',
+        //     '_attributes' => [
+        //         'version' => $array2['DocumentoChis']['_attributes']['version'],
+        //         'fecha_creacion' => $array2['DocumentoChis']['_attributes']['fecha_creacion'],
+        //         'no_oficio' => $array2['DocumentoChis']['_attributes']['no_oficio'],
+        //         'dependencia_origen' => $array2['DocumentoChis']['_attributes']['dependencia_origen'],
+        //         'asunto_docto' => $array2['DocumentoChis']['_attributes']['asunto_docto'],
+        //         'tipo_docto' => $array2['DocumentoChis']['_attributes']['tipo_docto'],
+        //         'xmlns' => 'http://firmaelectronica.chiapas.gob.mx/GCD/DoctoGCD',
+        //     ],
+        // ]);
 
         DocumentosFirmar::where('id', $request->idFile)
             ->update([
                 'obj_documento' => json_encode($obj_documento),
-                'obj_documento_interno' => json_encode($obj_documento_interno),
+                // 'obj_documento_interno' => json_encode($obj_documento_interno),
                 'documento' => $result,
-                'documento_interno' => $result2
+                // 'documento_interno' => $result2
             ]);
 
         return redirect()->route('firma.inicio')->with('warning', 'Documento firmado exitosamente!');
@@ -206,18 +206,18 @@ class FirmaController extends Controller {
 
     public function generarPDF(Request $request) {
         $documento = DocumentosFirmar::where('id', $request->txtIdGenerar)->first();
-        $objeto = json_decode($documento->obj_documento_interno,true);
-        $no_oficio = json_decode(json_encode(simplexml_load_string($documento['documento_interno'], "SimpleXMLElement", LIBXML_NOCDATA),true));
+        // $objeto = json_decode($documento->obj_documento_interno,true);
+        // $no_oficio = json_decode(json_encode(simplexml_load_string($documento['documento_interno'], "SimpleXMLElement", LIBXML_NOCDATA),true));
         // dd($no_oficio);
-        $no_oficio = $no_oficio->{'@attributes'}->no_oficio;
-        $uuid = $documento->uuid_sellado;
-        $cadena_sello = $documento->cadena_sello;
-        $fecha_sello = $documento->fecha_sellado;
-        $folio = $documento->nombre_archivo;
-        $tipo_archivo = $documento->tipo_archivo;
-        $totalFirmantes = $objeto['firmantes']['_attributes']['num_firmantes'];
+        // $no_oficio = $no_oficio->{'@attributes'}->no_oficio;
+        // $uuid = $documento->uuid_sellado;
+        // $cadena_sello = $documento->cadena_sello;
+        // $fecha_sello = $documento->fecha_sellado;
+        // $folio = $documento->nombre_archivo;
+        // $tipo_archivo = $documento->tipo_archivo;
+        // $totalFirmantes = $objeto['firmantes']['_attributes']['num_firmantes'];
 
-        if ($documento->tipo_archivo == 'Contrato') {
+        // if ($documento->tipo_archivo == 'Contrato') {
             $contrato = new contratos();
             $data_contrato = contratos::SELECT('contratos.*')
                             ->JOIN('folios', 'folios.id_folios', 'contratos.id_folios')
@@ -257,36 +257,36 @@ class FirmaController extends Controller {
             $cantidad = $this->numberFormat($data_contrato->cantidad_numero);
             $monto = explode(".",strval($data_contrato->cantidad_numero));
 
-            //Generacion de QR
-            $verificacion = "https://innovacion.chiapas.gob.mx/validacionDocumentoPrueba/consulta/Certificado3?guid=$uuid&no_folio=$no_oficio";
-            ob_start();
-            QRcode::png($verificacion);
-            $qrCodeData = ob_get_contents();
-            ob_end_clean();
-            $qrCodeBase64 = base64_encode($qrCodeData);
-            // Fin de Generacion
+            // //Generacion de QR
+            // $verificacion = "https://innovacion.chiapas.gob.mx/validacionDocumentoPrueba/consulta/Certificado3?guid=$uuid&no_folio=$no_oficio";
+            // ob_start();
+            // QRcode::png($verificacion);
+            // $qrCodeData = ob_get_contents();
+            // ob_end_clean();
+            // $qrCodeBase64 = base64_encode($qrCodeData);
+            // // Fin de Generacion
 
             if($data->tipo_curso == 'CURSO')
             {
                 if ($data->modinstructor == 'HONORARIOS') {
-                    $pdf = PDF::loadView('layouts.firmaElectronica.contratohonorarios', compact('director','testigo1','testigo2','testigo3','data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir','no_oficio','objeto','uuid','qrCodeBase64','verificacion','cadena_sello','fecha_sello'));
+                    $pdf = PDF::loadView('layouts.firmaElectronica.contratohonorarios', compact('director','testigo1','testigo2','testigo3','data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir'));
                 }else {
-                    $pdf = PDF::loadView('layouts.firmaElectronica.contratohasimilados', compact('director','testigo1','testigo2','testigo3','data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir','no_oficio','objeto','uuid','qrCodeBase64','verificacion','cadena_sello','fecha_sello'));
+                    $pdf = PDF::loadView('layouts.firmaElectronica.contratohasimilados', compact('director','testigo1','testigo2','testigo3','data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir'));
                 }
             }
             else
             {
-                $pdf = PDF::loadView('layouts.firmaElectronica.contratocertificacion', compact('director','testigo1','testigo2','testigo3','data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir','no_oficio','objeto','uuid','qrCodeBase64','verificacion','cadena_sello','fecha_sello'));
+                $pdf = PDF::loadView('layouts.firmaElectronica.contratocertificacion', compact('director','testigo1','testigo2','testigo3','data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir'));
             }
             return $pdf->stream("Contrato-Instructor-$data_contrato->numero_contrato.pdf");
 
-        } else {
-            $url = $documento->link_pdf;
-            $unity = explode('/', $url);
-            $path = storage_path('app/public/uploadFiles/DocumentosFirmas/'.$unity[6].'/'.$documento->nombre_archivo);
-            $result = str_replace('\\','/', $path);
-            $pageCount =  $pdf->setSourceFile($result);
-        }
+        // } else {
+        //     $url = $documento->link_pdf;
+        //     $unity = explode('/', $url);
+        //     $path = storage_path('app/public/uploadFiles/DocumentosFirmas/'.$unity[6].'/'.$documento->nombre_archivo);
+        //     $result = str_replace('\\','/', $path);
+        //     $pageCount =  $pdf->setSourceFile($result);
+        // }
 
         // for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
         //     $tplId = $pdf->importPage($pageNo);

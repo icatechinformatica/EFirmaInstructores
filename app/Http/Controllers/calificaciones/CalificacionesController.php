@@ -91,7 +91,6 @@ class CalificacionesController extends Controller {
             } else return "Curso no v&aacute;lido para esta Unidad";
         }
         return "Clave no v&aacute;lida";
-        dd($request);
     }
 
     public function calificaciones(Request $request) {
@@ -122,7 +121,6 @@ class CalificacionesController extends Controller {
                     return "NO HAY ALUMNOS INSCRITOS";
                     exit;
                 }
-
                 $consec = 1;
                 $pdf = PDF::loadView('layouts.calificaciones.pdfCalificaciones', compact('curso','alumnos','consec'));
                 $pdf->setPaper('Letter', 'landscape');
