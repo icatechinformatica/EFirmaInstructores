@@ -151,7 +151,7 @@
             <table class="tabla">
                 <thead>
                     <tr>
-                        <td 
+                        <td
                             @if (explode('-', $mes['ultimoDia'])[2] == 28)
                                 colspan="33"
                             @elseif (explode('-', $mes['ultimoDia'])[2] == 29)
@@ -163,7 +163,7 @@
                             @endif
                             >
                             <div id="curso">
-                                UNIDAD DE CAPACITACI&Oacute;N: 
+                                UNIDAD DE CAPACITACI&Oacute;N:
                                 <span class="tab">{{ $curso->plantel }} {{ $curso->unidad }}</span>
                                 CLAVE CCT: <span class="tab">{{ $curso->cct }}</span>
                                 CICLO ESCOLAR: <span class="tab">{{ $curso->ciclo }}</span>
@@ -184,7 +184,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <th 
+                        <th
                             @if (explode('-', $mes['ultimoDia'])[2] == 28)
                                 colspan="33"
                             @elseif (explode('-', $mes['ultimoDia'])[2] == 29)
@@ -216,7 +216,7 @@
                 <tbody>
                     @foreach ($alumnos as $a)
                         @php
-                            $tAsis = 0; 
+                            $tAsis = 0;
                             $tFalta = 0;
                         @endphp
                         <tr>
@@ -256,7 +256,7 @@
         @endforeach
     @else
         {{ 'El Curso no tiene registrado la fecha de inicio y de termino' }}
-    @endif 
+    @endif
 </body>
 
 </html>

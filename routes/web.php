@@ -49,6 +49,9 @@ Route::post('/Asistencia/guardar', 'asistencia\AsistenciaController@update')->na
 Route::post('/Asistencia/pdf', 'asistencia\AsistenciaController@asistenciaPdf')->name('asistencia.pdf');
 Route::post('/Asistencia/enviar', 'asistencia\AsistenciaController@asistenciaEnviar')->name('asistencia.enviar');
 
+//Evidencia Fotografica
+Route::get('/Evidencia/inicio', 'evidencia\EvidenciaController@index')->name('evidencia.inicio');
+
 // agregar documento para firmar
 Route::get('/AddDocumentfirma/inicio', 'firmaElectronica\AddDocumentFirmaController@index')->name('addDocument.inicio');
 Route::post('/AddDocumentfirma/buscar', 'firmaElectronica\AddDocumentFirmaController@search')->name('addDocument.buscar');

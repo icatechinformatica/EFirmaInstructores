@@ -282,6 +282,13 @@ return [
             'icon_color' => 'color_icono'
         ],
         // [
+        //     'text' => 'Evidencia Fotografica',
+        //     'route'  => 'evidencia.inicio',
+        //     'icon' => 'fa fa-camera-retro',
+        //     // 'can' => 'permiso.inicio',
+        //     'icon_color' => 'color_icono'
+        // ],
+        // [
         //     'text' => 'Agregar Documento',
         //     'route'  => 'addDocument.inicio',
         //     'icon' => 'fa fa-file',
