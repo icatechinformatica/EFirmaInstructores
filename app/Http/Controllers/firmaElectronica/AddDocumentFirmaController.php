@@ -323,8 +323,8 @@ class AddDocumentFirmaController extends Controller {
         $resToken = Http::withHeaders([
             'Accept' => 'application/json'
         ])->post('https://interopera.chiapas.gob.mx/gobid/api/AppAuth/AppTokenAuth', [
-            'nombre' => 'FirmaElectronica',
-            'key' => '19106D6F-E91F-4C20-83F1-1700B9EBD553'
+            'nombre' => 'SISTEM_INSTRUC',
+            'key' => '7339F037-D329-4165-A1C9-45FAA99D5FD9'
         ]);
         $token = $resToken->json();
 

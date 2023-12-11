@@ -52,7 +52,7 @@
         </form>
 
         <div class="card">
-            <div class="card-header">Mis documentos</div>
+            <div class="card-header"><div style="display: inline-block;">Mis documentos</div><div style="display: inline-block; margin-left: 70%;"> CURP: {{$curpUser->curp}}</div></div>
             <div class="card-body px-0">
 
                 <div class="row">
@@ -95,7 +95,7 @@
 
                                                         foreach ($obj['firmantes']['firmante'][0] as $value) {
                                                             // $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].'(), ';
-                                                            if($value['_attributes']['email_firmante'] == $email){
+                                                            if($value['_attributes']['curp_firmante'] == $curp){
                                                                 $curp = $value['_attributes']['curp_firmante'];
                                                             }
 
@@ -484,8 +484,7 @@
     <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/access.js"></script>
     <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/dataSign.js"></script>
     <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/dataTransportSign.js"></script>
-    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/signedjs-2.1/signature-spv021_doctos-prueba.js"></script>
-
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/signedjs-2.1/signature-spv021_doctos.js"></script>
     <script>
         var cadena = '', xmlBase64 = '', curp = '', idFile = '';
         $(document).ready(function() {
@@ -516,7 +515,7 @@
         }
 
         function firmarDocumento(token) {
-            var vresponseSignature = sign(cadena, curp, $('#txtpassword').val(), '39', token);
+            var vresponseSignature = sign(cadena, curp, $('#txtpassword').val(), '88', token);
             // RAQN770121HDFMZV08
             console.log(curp)
             return vresponseSignature;
