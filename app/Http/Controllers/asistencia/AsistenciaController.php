@@ -27,20 +27,26 @@ class AsistenciaController extends Controller
         if ($clave != null) session(['claveAsis' => $clave]);
         else $clave = session('claveAsis');
         $curso = tbl_cursos::where('clave', '=', $clave)->first();
-
-        $dias = $dias_agenda = $alumnos = [];
+        // dd('a');
+        $dias = $dias_agenda = $dias_agenda_raw = $alumnos = [];
         $fecha_valida = NULL;
         $fecha_hoy = date("d-m-Y");
 
         if ($curso) {
 
-            $agenda = agenda::Where('id_curso', $curso->folio_grupo)->Select('start')->Get();
+            $agenda = agenda::Where('id_curso', $curso->folio_grupo)->Select('start')->GroupBy('start')->Get();
             foreach ($agenda as $item) {
                 $temporal = explode(' ', $item->start);
-                array_push($dias_agenda, $temporal[0]);
+                array_push($dias_agenda_raw, $temporal[0]);
             }
 
-            if ($curso->curp == Auth::user()->curp) {
+            foreach($dias_agenda_raw as $moist) {
+                if(!in_array($moist, $dias_agenda)) {
+                    array_push($dias_agenda, $moist);
+                }
+            }
+
+            if ($curso->curp != Auth::user()->curp) {
                 $inicio = $curso->inicio;
                 $termino = $curso->termino;
                 for ($i = $inicio; $i <= $termino; $i = date("Y-m-d", strtotime($i . "+ 1 days"))) {
