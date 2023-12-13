@@ -32,42 +32,46 @@ class FirmaController extends Controller {
 
     // php artisan serve --port=8001
     public function index(Request $request) {
-        $email = Auth::user()->email;
+        $curp = Auth::user()->curp;
+        $curpUser = DB::connection('pgsql')->Table('instructores')->Select('curp')
+            ->Where('id', Auth::user()->id_sivyc)
+            ->First();
+
         $docsFirmar1 = DocumentosFirmar::where('status','!=','CANCELADO')
             ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x
-                WHERE x->'_attributes'->>'email_firmante' IN ('".$email."')
+                WHERE x->'_attributes'->>'curp_firmante' IN ('".$curp."')
                 AND x->'_attributes'->>'firma_firmante' is null)");
             // ->orderBy('id', 'desc')->get();
 
         $docsFirmados1 = DocumentosFirmar::where('status', 'EnFirma')
-            ->where(function ($query) use ($email) {
+            ->where(function ($query) use ($curp) {
                 $query->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x
-                    WHERE x->'_attributes'->>'email_firmante' IN ('".$email."')
+                    WHERE x->'_attributes'->>'curp_firmante' IN ('".$curp."')
                     AND x->'_attributes'->>'firma_firmante' <> '')")
-                ->orWhere(function($query1) use ($email) {
-                    $query1->where('obj_documento_interno->emisor->_attributes->email', $email)
+                ->orWhere(function($query1) use ($curp) {
+                    $query1->where('obj_documento_interno->emisor->_attributes->email', $curp)
                             ->where('status', 'EnFirma');
                 });
             });
             // ->orderBy('id', 'desc')->get();
 
         $docsValidados1 = DocumentosFirmar::where('status', 'VALIDADO')
-            ->where(function ($query) use ($email) {
+            ->where(function ($query) use ($curp) {
                 $query->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x
-                    WHERE x->'_attributes'->>'email_firmante' IN ('".$email."'))")
-                ->orWhere(function($query1) use ($email) {
-                    $query1->where('obj_documento_interno->emisor->_attributes->email', $email)
+                    WHERE x->'_attributes'->>'curp_firmante' IN ('".$curp."'))")
+                ->orWhere(function($query1) use ($curp) {
+                    $query1->where('obj_documento_interno->emisor->_attributes->email', $curp)
                             ->where('status', 'VALIDADO');
                 });
             });
             // ->orderBy('id', 'desc')->get();
 
         $docsCancelados1 = DocumentosFirmar::where('status', 'CANCELADO')
-            ->where(function ($query) use ($email) {
+            ->where(function ($query) use ($curp) {
                 $query->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x
-                    WHERE x->'_attributes'->>'email_firmante' IN ('".$email."'))")
-                ->orWhere(function($query1) use ($email) {
-                    $query1->where('obj_documento_interno->emisor->_attributes->email', $email)
+                    WHERE x->'_attributes'->>'curp_firmante' IN ('".$curp."'))")
+                ->orWhere(function($query1) use ($curp) {
+                    $query1->where('obj_documento_interno->emisor->_attributes->email', $curp)
                             ->where('status', 'CANCELADO');
                 });
             });
@@ -101,7 +105,7 @@ class FirmaController extends Controller {
         }
         $token = $getToken->token;
 
-        return view('layouts.firmaElectronica.firmaElectronica', compact('docsFirmar', 'email', 'docsFirmados', 'docsValidados', 'docsCancelados', 'tipo_documento', 'token'));
+        return view('layouts.firmaElectronica.firmaElectronica', compact('docsFirmar', 'curp', 'docsFirmados', 'docsValidados', 'docsCancelados', 'tipo_documento', 'token','curpUser'));
     }
 
     public function update(Request $request) {
@@ -474,8 +478,8 @@ class FirmaController extends Controller {
         $resToken = Http::withHeaders([
             'Accept' => 'application/json'
         ])->post('https://interopera.chiapas.gob.mx/gobid/api/AppAuth/AppTokenAuth', [
-            'nombre' => 'FirmaElectronica',
-            'key' => '19106D6F-E91F-4C20-83F1-1700B9EBD553'
+            'nombre' => 'SISTEM_INSTRUC',
+            'key' => '7339F037-D329-4165-A1C9-45FAA99D5FD9'
         ]);
 
         $token = $resToken->json();
@@ -490,7 +494,7 @@ class FirmaController extends Controller {
         $response1 = Http::withHeaders([
             'Accept' => 'application/json',
             'Authorization' => 'Bearer '.$token
-        ])->post('https://apiprueba.firma.chiapas.gob.mx/FEA/v2/NotariaXML/sellarXML', [
+        ])->post('https://api.firma.chiapas.gob.mx/FEA/v2/NotariaXML/sellarXML', [
             'xml_Firmado' => $xml
         ]);
         return $response1;
