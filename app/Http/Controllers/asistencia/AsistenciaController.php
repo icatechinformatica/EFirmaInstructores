@@ -46,7 +46,7 @@ class AsistenciaController extends Controller
                 }
             }
 
-            if ($curso->curp != Auth::user()->curp) {
+            if ($curso->curp == Auth::user()->curp) {
                 $inicio = $curso->inicio;
                 $termino = $curso->termino;
                 for ($i = $inicio; $i <= $termino; $i = date("Y-m-d", strtotime($i . "+ 1 days"))) {
