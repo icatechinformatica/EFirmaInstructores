@@ -31,6 +31,7 @@ use Carbon\Carbon;
 class FirmaController extends Controller {
 
     // php artisan serve --port=8001
+    //Hola esto es una prueba
     public function index(Request $request) {
         $curp = Auth::user()->curp;
         $curpUser = DB::connection('pgsql')->Table('instructores')->Select('curp')
