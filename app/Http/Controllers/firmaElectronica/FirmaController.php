@@ -143,6 +143,17 @@ class FirmaController extends Controller {
         $array['DocumentoChis']['firmantes'] = $obj_documento['firmantes'];
         // $array2['DocumentoChis']['firmantes'] = $obj_documento_interno['firmantes'];
 
+        ##By Jose Luis Moreno/ Creamos nuevo array para ordenar el xml
+        if(isset($obj_documento['anexos'])){
+            $ArrayXml = [
+                "emisor" => $obj_documento['emisor'],
+                "archivo" => $obj_documento['archivo'],
+                "anexos" => $obj_documento['anexos'],
+                "firmantes" => $obj_documento['firmantes'],
+            ];
+            $obj_documento = $ArrayXml;
+        }
+
         $result = ArrayToXml::convert($obj_documento, [
             'rootElementName' => 'DocumentoChis',
             '_attributes' => [
@@ -481,6 +492,8 @@ class FirmaController extends Controller {
         ])->post('https://interopera.chiapas.gob.mx/gobid/api/AppAuth/AppTokenAuth', [
             'nombre' => 'SISTEM_INSTRUC',
             'key' => '7339F037-D329-4165-A1C9-45FAA99D5FD9'
+            // 'nombre' => 'FirmaElectronica',
+            // 'key' => '19106D6F-E91F-4C20-83F1-1700B9EBD553'
         ]);
 
         $token = $resToken->json();
@@ -498,6 +511,7 @@ class FirmaController extends Controller {
         ])->post('https://api.firma.chiapas.gob.mx/FEA/v2/NotariaXML/sellarXML', [
             'xml_Firmado' => $xml
         ]);
+        //https://apiprueba.firma.chiapas.gob.mx/FEA/v2/NotariaXML/sellarXML
         return $response1;
     }
 

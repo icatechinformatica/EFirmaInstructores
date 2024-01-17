@@ -10,4 +10,6 @@ class tbl_cursos extends Model {
 
     protected $table = 'tbl_cursos';
 
+    protected $casts = ['evidencia_fotografica' => 'json'];
+
 }
