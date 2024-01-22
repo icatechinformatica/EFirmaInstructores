@@ -83,7 +83,7 @@ class ReporteController extends Controller
 
             if ($curso->curp == Auth::user()->curp) {
 
-                if ($curso->turnado == "UNIDAD" and $curso->status != "REPORTADO" and $curso->status != "CANCELADO") {
+                if ($curso->status_curso == "AUTORIZADO") {
 
                     ##Verificamos si el archivo no ha sido firmado electronicamente
                     $message = 'ok';
@@ -151,6 +151,7 @@ class ReporteController extends Controller
         }
         $client = new Client();
         //http://localhost:8080/api/v1/catchimg
+        //https://sivyc.icatech.gob.mx/api/v1/catchimg
         $response = $client->request('POST', 'https://sivyc.icatech.gob.mx/api/v1/catchimg', [
             'headers' => [
                 'Accept' => 'multipart/form-data',
@@ -204,7 +205,7 @@ class ReporteController extends Controller
         #Generamos xml desde Instructores.
         $clave =  $request->claveg;
         $cursoBD = tbl_cursos::select('id','evidencia_fotografica', 'turnado', 'status', 'status_curso')->where('clave', '=', $clave)->first();
-        if($cursoBD->turnado == "UNIDAD" and $cursoBD->status != "REPORTADO" and $cursoBD->status != "CANCELADO" and $cursoBD->status_curso == "AUTORIZADO"){
+        if($cursoBD->status_curso == "AUTORIZADO"){
         }else{
             return redirect()->route('reporte.inicio')->with('alert', 'EL CURSO YA ESTA REPORTADO Y/O CANCELADO');
         }
@@ -528,16 +529,24 @@ class ReporteController extends Controller
     }
 
     public function generarToken() {
+        ##Producción
         $resToken = Http::withHeaders([
             'Accept' => 'application/json'
         ])->post('https://interopera.chiapas.gob.mx/gobid/api/AppAuth/AppTokenAuth', [
             'nombre' => 'SISTEM_INSTRUC',
             'key' => '7339F037-D329-4165-A1C9-45FAA99D5FD9'
-            // 'nombre' => 'FirmaElectronica',
-            // 'key' => '19106D6F-E91F-4C20-83F1-1700B9EBD553'
         ]);
-        $token = $resToken->json();
 
+        ##Prueba
+        // $resToken = Http::withHeaders([
+        //     'Accept' => 'application/json'
+        // ])->post('https://interopera.chiapas.gob.mx/gobid/api/AppAuth/AppTokenAuth', [
+        //     'nombre' => 'FirmaElectronica',
+        //     'key' => '19106D6F-E91F-4C20-83F1-1700B9EBD553'
+        // ]);
+
+
+        $token = $resToken->json();
         Tokens_icti::create([
             'token' => $token
         ]);
@@ -546,13 +555,21 @@ class ReporteController extends Controller
 
     // obtener la cadena original
     public function getCadenaOriginal($xmlBase64, $token) {
+        ##Produccion
         $response1 = Http::withHeaders([
             'Accept' => 'application/json',
             'Authorization' => 'Bearer '.$token,
         ])->post('https://api.firma.chiapas.gob.mx/FEA/v2/Tools/generar_cadena_original', [
             'xml_OriginalBase64' => $xmlBase64
         ]);
-        // https://apiprueba.firma.chiapas.gob.mx/FEA/v2/Tools/generar_cadena_original
+
+        ##Prueba
+        // $response1 = Http::withHeaders([
+        //     'Accept' => 'application/json',
+        //     'Authorization' => 'Bearer '.$token,
+        // ])->post('https://apiprueba.firma.chiapas.gob.mx/FEA/v2/Tools/generar_cadena_original', [
+        //     'xml_OriginalBase64' => $xmlBase64
+        // ]);
 
         return $response1;
     }
