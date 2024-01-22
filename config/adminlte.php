@@ -281,6 +281,13 @@ return [
             // 'can' => 'permiso.inicio',
             'icon_color' => 'color_icono'
         ],
+        [
+            'text' => 'Reporte Fotografico',
+            'route'  => 'reporte.inicio',
+            'icon' => 'fa fa-camera-retro',
+            // 'can' => 'permiso.inicio',
+            'icon_color' => 'color_icono'
+        ],
         // [
         //     'text' => 'Agregar Documento',
         //     'route'  => 'addDocument.inicio',
