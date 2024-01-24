@@ -34,10 +34,18 @@ class AsistenciaController extends Controller
 
         if ($curso) {
 
-            $agenda = agenda::Where('id_curso', $curso->folio_grupo)->Select('start')->GroupBy('start')->Get();
+            $agenda = agenda::Where('id_curso', $curso->folio_grupo)->Select('start','end')->GroupBy('start','end')->Get();
             foreach ($agenda as $item) {
-                $temporal = explode(' ', $item->start);
-                array_push($dias_agenda_raw, $temporal[0]);
+
+                $temporal_start = explode(' ', $item->start);
+                $temporal_end = explode(' ', $item->end);
+                $dia_start = explode('-', $temporal_start[0]);
+                $dia_end = explode('-', $temporal_end[0]);
+                for ($i = $dia_start[2]; $i <= $dia_end[2]; $i++) {
+                    array_push($dias_agenda_raw, $temporal_start[0]);
+                    $dia_start[2]++;
+                    $temporal_start[0] = implode('-',$dia_start);
+                }
             }
 
             foreach($dias_agenda_raw as $moist) {
@@ -46,7 +54,7 @@ class AsistenciaController extends Controller
                 }
             }
 
-            if ($curso->curp == Auth::user()->curp) {
+            if ($curso->curp != Auth::user()->curp) {
                 $inicio = $curso->inicio;
                 $termino = $curso->termino;
                 for ($i = $inicio; $i <= $termino; $i = date("Y-m-d", strtotime($i . "+ 1 days"))) {
