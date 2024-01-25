@@ -4,8 +4,8 @@ namespace App\Http\Controllers\firmaElectronica;
 
 
 // use QrCode;
-use setasign\Fpdi\Fpdi;
-use App\DocumentosFirmar;
+use setasign\fpdi\Fpdi;
+use app\DocumentosFirmar;
 use Illuminate\Http\Request;
 use Spatie\ArrayToXml\ArrayToXml;
 use Illuminate\Support\Facades\DB;
