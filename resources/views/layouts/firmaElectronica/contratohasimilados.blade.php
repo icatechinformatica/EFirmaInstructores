@@ -153,45 +153,50 @@
                     <br><dd>Leído que fue el presente contrato a las partes que en él intervienen y una vez enterados de su contenido y alcance legales, son conformes con los términos del mismo y para constancia lo firman y ratifican ante la presencia de los testigos que al final suscriben; en el municipio de {{$data_contrato->municipio}}, Chiapas; el día de la expedición de la suficiencia presupuestal, que se adjunta al presente como si a la letra se insertase, a efecto de garantizar la disponibilidad financiera de la obligación contractual.</dd>
                 </div>
                 <br>
+                <table>
+                    <tr>
+                        <td colspan="2"><p align="center"><b>"ICATECH"</b></p></td>
+                        <td colspan="2"><p align="center"><b>"PRESTADOR DE SERVICIOS"</b></p></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><div align="center"><br><br></td></div>
+                        <td colspan="2"><div align="center"><br><br></td></div>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><div align="center"><b>{{$director->nombre}} {{$director->apellidoPaterno}} {{$director->apellidoMaterno}}</b></td></div>
+                        <td colspan="2"><div align="center"><b>C. {{$nomins}}</b></td></div>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><div align="center"><b>{{$director->puesto}} DE CAPACITACIÓN {{$data_contrato->unidad_capacitacion}}</b></td></div>
+                        <td colspan="2"><div align="center"></td></div>
+                    </tr>
+                </table>
+                <p align="center"><b>"TESTIGOS"</b></p>
+                <br><br>
+                <table>
+                    <tr>
+                        <td colspan="2"><p align="center"></p></td>
+                        <td colspan="2"><p align="center"></p></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><div align="center"><b>{{$testigo1->nombre}} {{$testigo1->apellidoPaterno}} {{$testigo1->apellidoMaterno}}</b></td></div>
+                        <td colspan="2"><div align="center"><b>{{$testigo2->nombre}} {{$testigo2->apellidoPaterno}} {{$testigo2->apellidoMaterno}}</b></td></div>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><div align="center"><b>{{$testigo1->puesto}}</b></td></div>
+                        <td colspan="2"><div align="center"><b>{{$testigo2->puesto}}</b></td></div>
+                    </tr>
+                </table>
+                <div align=center>
+                    <br>
+                    <br/>
+                    <br>________________________________________
+                    <br><small><b>{{$testigo3->nombre}} {{$testigo3->apellidoPaterno}} {{$testigo3->apellidoMaterno}}</b></small>
+                    <br><small><b>{{$testigo3->puesto}}</b> </small></b>
+                </div>
+                <br>
                 <div align=justify>
-                    <table style="font:9px;">
-                        @foreach ($objeto['firmantes']['firmante'][0] as $key=>$moist)
-                            @if($key == 2)
-                            <tr><td height="70px;"></td></tr>
-                            @endif
-                            <tr>
-                                <td width="100px;"><b>Nombre del firmate:</b></td>
-                                <td height="25px;">{{$moist['_attributes']['nombre_firmante']}}</td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align: top;"><b>Firma Electronica:</b></td>
-                                <td>{{wordwrap($moist['_attributes']['firma_firmante'], 100, "\n", true) }}</td>
-                            </tr>
-                            <tr>
-                                <td><b>Puesto:</b></td>
-                                <td height="25px;">{{$moist['_attributes']['puesto_firmante']}}</td>
-                            </tr>
-                            <tr>
-                                <td><b>Fecha de Firma:</b></td>
-                                <td>{{$moist['_attributes']['fecha_firmado_firmante']}}</td>
-                            </tr>
-                            <tr>
-                                <td><b>Numero de Serie:</b></td>
-                                <td>{{$moist['_attributes']['no_serie_firmante']}}</td>
-                            </tr>
-                            <tr><p></p></tr>
-                        @endforeach
-                    </table></small>
-                    <table style="font:10px;">
-                        <tr>
-                            <td width="45px;"><img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="Código QR"></td>
-                            <td style="vertical-align: top;" width="25px;"><br><b>Folio:</b></td>
-                            <td style="vertical-align: top; text-align: justify;">
-                                <br>{{$uuid}}<br><br><br>
-                                Las Firmas que anteceden corresponden al Contrato de prestación de servicios profesionales por honorarios en su modalidad de horas curso No. {{$data_contrato->numero_contrato}}, que celebran por una parte el Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas, representado por el (la) C. {{$director->nombre}} {{$director->apellidoPaterno}} {{$director->apellidoMaterno}}, {{$director->puesto}} DE CAPACITACIÓN {{$data_contrato->unidad_capacitacion}}, y el (la) C. {{$nomins}}, en el Municipio de {{$data_contrato->municipio}}, a {{$D}} de {{$M}} del año {{$Y}}.
-                            </td>
-                        </tr>
-                    </table>
+                    <small  style="font-size: 10px;">Las Firmas que anteceden corresponden al Contrato de prestación de servicios profesionales por sueldos y salarios e ingresos asimilados a salarios en su modalidad de horas curso No. {{$data_contrato->numero_contrato}}, que celebran por una parte el Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas, representado por el (la) C. {{$director->nombre}} {{$director->apellidoPaterno}} {{$director->apellidoMaterno}}, {{$director->puesto}} DE CAPACITACIÓN {{$data_contrato->unidad_capacitacion}}, y el (la) C. {{$nomins}}, en el Municipio de {{$data_contrato->municipio}}, a {{$D}} de {{$M}} del año {{$Y}}@if($firma_electronica == TRUE);  el día de la expedición de la suficiencia presupuestal @endif.</small>
                 </div>
             </div>
         </div>
