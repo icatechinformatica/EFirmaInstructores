@@ -135,7 +135,7 @@
                         </div>
                     @elseif($message == 'noDisponible')
                         <div class="alert alert-warning mt-4">
-                            <p>El Curso fué {{$curso->status}} y turnado a {{$curso->turnado}}.</p>
+                            <p>El Curso fué {{$curso->status_curso}}.</p>
                         </div>
                     @elseif($message == 'ok')
 
@@ -276,17 +276,28 @@
         numImagenesG = cantidad_imagen;
         const imageContainer = document.getElementById('imageContainer');
         // console.log(event.target.files.length);
+
+        //VALIDAR QUE SEAN 3 FOTOGRAFIAS
         if (cantidad_imagen != 3) {
-            alert("DEBE CARGAR 3 FOTOGRAFÍAS");
+            alert("DEBE CARGAR EXACTAMENTE 3 FOTOGRAFÍAS");
             return;
         }
-        // Limpiar el contenedor de imágenes antes de agregar nuevas
-        imageContainer.innerHTML = '';
 
-        // Recorrer cada archivo seleccionado
+        //VALIDAR TAMAÑO DE IMAGEN
+        let statusTamanio = false;
+        for (const file of input.files) {
+            const tamanioEnKilobytes = file.size / 1024;
+            if (tamanioEnKilobytes > 3000) { statusTamanio = true;}
+        }
+        if (statusTamanio) {
+            alert("EL TAMAÑO DE LA IMAGEN DEBE SER MENOR A 3 MEGABYTES");
+            return;
+        }
+
+        //MOSTRAR IMAGEN A LA VISTA
+        imageContainer.innerHTML = '';
         for (const file of input.files) {
             const reader = new FileReader();
-
             reader.onload = function (e) {
                 // Crear elemento de imagen
                 const img = document.createElement('img');
@@ -316,6 +327,20 @@
         let input = imagenesGlobal; //Agregamos al input lo que contiene la variable global
         const formData = new FormData();
 
+        //VALIDAR TAMAÑO DE IMAGEN
+        let statusTamanio = false;
+        for (const file of input.files) {
+            const tamanioEnKilobytes = file.size / 1024;
+            if (tamanioEnKilobytes > 3000) { statusTamanio = true;}
+        }
+        if (statusTamanio) {
+            alert("EL TAMAÑO DE LA IMAGEN DEBE SER MENOR A 3 MEGABYTES");
+            loader('hide');
+            return;
+        }
+
+
+        //ENVIO DE IMAGENES POR PROMESAS
         for (const file of input.files) {
             formData.append('imagenes[]', file);
             formData.append('id_curso', id_curso);
