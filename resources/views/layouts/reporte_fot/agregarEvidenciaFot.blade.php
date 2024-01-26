@@ -195,10 +195,10 @@
 
                             {{-- boton generar pdf --}}
                             <div class="col-8">
-                                <button id="btnGenerar" type="button" class="btn btn-info mt-1" onclick="">GENERAR PDF</button>
+                                <button id="btnGenerar" type="button" class="btn btn-info mt-1 d-none" onclick="">GENERAR PDF</button>
                                 @if ($status_documento == "" || $status_documento == 'RETORNADO')
-                                <button id="btnSaveImg" type="button" class="btn btn-info mt-1" onclick="enviarImgServ({{$curso->id}})">GUARDAR FOTOS</button>
-                                <button id="btnEnviar" type="button" class="btn btn-danger mt-1" onclick="">ENVIAR</button>
+                                <button id="btnSaveImg" type="button" class="btn btn-info mt-1 d-none" onclick="enviarImgServ({{$curso->id}})">GUARDAR FOTOS</button>
+                                <button id="btnEnviar" type="button" class="btn btn-danger mt-1 d-none" onclick="">ENVIAR</button>
                                 @endif
                             </div>
 
