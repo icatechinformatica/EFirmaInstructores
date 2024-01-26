@@ -4,7 +4,7 @@ namespace App\Http\Controllers\firmaElectronica;
 
 
 // use QrCode;
-use setasign\Fpdi\Fpdi;
+use setasign\fpdi\Fpdi;
 use App\DocumentosFirmar;
 use Illuminate\Http\Request;
 use Spatie\ArrayToXml\ArrayToXml;
@@ -13,10 +13,10 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\tbl_cursos;
 use App\Tokens_icti;
-use App\models\contratos;
-use App\models\contrato_directorio;
-use App\models\directorio;
-use App\models\especialidad_instructor;
+use App\Models\contratos;
+use App\Models\contrato_directorio;
+use App\Models\directorio;
+use App\Models\especialidad_instructor;
 // use BaconQrCode\Encoder\QrCode;
 use Illuminate\Support\Facades\Http;
 use Vyuldashev\XmlToArray\XmlToArray;
