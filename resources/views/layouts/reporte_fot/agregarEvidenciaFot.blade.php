@@ -182,7 +182,7 @@
                             @endif
 
                             {{-- Cargar y visualizar imagen --}}
-                            <span class="badge badge-light mt-3">3 FOTOGRAFÍAS</span>
+                            <span class="badge badge-light mt-3">MINIMO 2, MAXIMO 3 FOTOGRAFÍAS</span>
 
                             <div class="col-12">
                                 <!-- Input para seleccionar imágenes -->
@@ -195,10 +195,10 @@
 
                             {{-- boton generar pdf --}}
                             <div class="col-8">
-                                <button id="btnGenerar" type="button" class="btn btn-info mt-1 d-none" onclick="">GENERAR PDF</button>
+                                <button id="btnGenerar" type="button" class="btn btn-info mt-1" onclick="">GENERAR PDF</button>
                                 @if ($status_documento == "" || $status_documento == 'RETORNADO')
-                                <button id="btnSaveImg" type="button" class="btn btn-info mt-1 d-none" onclick="enviarImgServ({{$curso->id}})">GUARDAR FOTOS</button>
-                                <button id="btnEnviar" type="button" class="btn btn-danger mt-1 d-none" onclick="">ENVIAR</button>
+                                <button id="btnSaveImg" type="button" class="btn btn-info mt-1" onclick="enviarImgServ({{$curso->id}})">GUARDAR FOTOS</button>
+                                <button id="btnEnviar" type="button" class="btn btn-danger mt-1" onclick="">ENVIAR DATOS</button>
                                 @endif
                             </div>
 
@@ -255,7 +255,14 @@
             //Agregar validacion de que ya sepa que se ha generado el pdf de lo contrario notificarle en este apartado
             let pdfGenerado =  true;
             if (pdfGenerado) {
-                if(confirm('¿Está seguro de enviar el reporte fotografico? \n Una vez enviado ya no podrá hacer cambios.') == true) {
+                let fechaActual = new Date();
+                let anio = fechaActual.getFullYear();
+                let mes = fechaActual.getMonth() + 1;
+                let dia = fechaActual.getDate();
+                // Formatear la fecha como una cadena en el formato deseado (por ejemplo, "YYYY-MM-DD")
+                let fechaFormateada =  (dia < 10 ? '0' : '') + dia + '/' + (mes < 10 ? '0' : '') + mes + '/' +  anio;
+
+                if(confirm('¿Está seguro de enviar los datos? \n Una vez enviado ya no podrá hacer cambios. \n La fecha del documento saldrá con: '+ fechaFormateada) == true) {
                     $('#frmEnviar').submit();
                 }
             } else {
@@ -278,8 +285,9 @@
         // console.log(event.target.files.length);
 
         //VALIDAR QUE SEAN 3 FOTOGRAFIAS
-        if (cantidad_imagen != 3) {
-            alert("DEBE CARGAR EXACTAMENTE 3 FOTOGRAFÍAS");
+        if (cantidad_imagen >= 2 && cantidad_imagen <= 3) {
+        }else{
+            alert("Por favor, cargue minimo 2 fotografias, maximo 3");
             return;
         }
 
@@ -290,7 +298,7 @@
             if (tamanioEnKilobytes > 3000) { statusTamanio = true;}
         }
         if (statusTamanio) {
-            alert("EL TAMAÑO DE LA IMAGEN DEBE SER MENOR A 3 MEGABYTES");
+            alert("El tamaño de la imagen debe ser menor a 3 Megabytes");
             return;
         }
 
@@ -318,8 +326,9 @@
     //GUARDADO DE IMAGENES
     function enviarImgServ(id_c) {
         loader('show');
-        if (numImagenesG != 3) {
-            alert("DEBE CARGAR 3 FOTOGRAFÍAS");
+        if (numImagenesG >= 2 && numImagenesG <= 3) {
+        }else{
+            alert("Por favor, cargue minimo 2 fotografias, maximo 3.");
             loader('hide');
             return;
         }
@@ -334,7 +343,7 @@
             if (tamanioEnKilobytes > 3000) { statusTamanio = true;}
         }
         if (statusTamanio) {
-            alert("EL TAMAÑO DE LA IMAGEN DEBE SER MENOR A 3 MEGABYTES");
+            alert("El tamaño de la imagen debe ser menor a 3 Megabytes");
             loader('hide');
             return;
         }

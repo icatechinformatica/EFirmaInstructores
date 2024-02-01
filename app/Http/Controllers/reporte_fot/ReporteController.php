@@ -123,7 +123,8 @@ class ReporteController extends Controller
         $imagenes = $request->file('imagenes');
         $idcurso = $request->id_curso;
 
-        if(count($imagenes) != 3){throw new \Exception('Se deben agregar 3 imagenes');}
+        if(count($imagenes) >= 2 && count($imagenes) <= 3){}
+        else{throw new \Exception('Se deben agregar 2 a 3 imagenes');}
         if(empty($idcurso) && !$request->hasFile('imagenes')){throw new \Exception('Faltan Valores');}
 
         ##Obtenemos las rutas de las imagenes de la bd y el id del curso
@@ -202,20 +203,23 @@ class ReporteController extends Controller
     #Envio de informacion de envio de reporte
     public function reporteenviar (Request $request) {
         #Generamos xml desde Instructores.
+        // $fotosbd = $md5bd = [];
         $clave =  $request->claveg;
+
+        ##BUSQUEDA DEL CURSO
         $cursoBD = tbl_cursos::select('id','evidencia_fotografica', 'turnado', 'status', 'status_curso')->where('clave', '=', $clave)->first();
         if($cursoBD->status_curso == "AUTORIZADO"){
         }else{
-            return redirect()->route('reporte.inicio')->with('alert', 'EL CURSO YA ESTA REPORTADO Y/O CANCELADO');
+            return redirect()->route('reporte.inicio')->with('alert', 'EL CURSO NO ESTÁ CANCELADO');
         }
 
+        ### GENERACION DE XML CON FOTOS
         if(isset($cursoBD->evidencia_fotografica['url_fotos']) && isset($cursoBD->evidencia_fotografica['md5_fotos'])){
             $fotosbd = $cursoBD->evidencia_fotografica['url_fotos'];
             $md5bd = $cursoBD->evidencia_fotografica['md5_fotos'];
             if (count($fotosbd) > 0 && count($md5bd) > 0) {
-                #Guardamos los datos
+                #Guardamos los datos con fotos
                 try {
-
                     $resul = $this->generar_xml($cursoBD->id, $fotosbd, $md5bd);
                     if ($resul == "EXITOSO") {
                         #Ejecutamos la generacion de XML
@@ -226,7 +230,7 @@ class ReporteController extends Controller
                         $json['fecha_envio'] = date('Y-m-d');
                         $curso->evidencia_fotografica = $json;
                         $curso->save();
-                        return redirect()->route('reporte.inicio')->with('success', "DATOS ENVIADOS CON EXITO");
+                        return redirect()->route('reporte.inicio')->with('success', "DATOS ENVIADOS CON ÉXITO");
                     }else{
                         return redirect()->route('reporte.inicio')->with('success', $resul);
                     }
@@ -240,7 +244,7 @@ class ReporteController extends Controller
             }
 
         }else{
-            return redirect()->route('reporte.inicio')->with('alert', '¡ERROR AL ENVIAR! NO EXISTEN EVIDENCIAS FOTOGRAFICAS.');
+            return redirect()->route('reporte.inicio')->with('alert', '¡ERROR! NO EXISTEN EVIDENCIAS FOTOGRAFICAS');
         }
 
 
@@ -290,8 +294,12 @@ class ReporteController extends Controller
              $dia = ($fechaCarbon->day) < 10 ? '0'.$fechaCarbon->day : $fechaCarbon->day;
              $fecha_gen = $dia.' DE '.$meses[$fechaCarbon->month-1].' DE '.$fechaCarbon->year;
          }else{
-            $dia = date('d'); $mes = date('m'); $anio = date('Y');
-            $dia = ($dia) < 10 ? '0'.$dia : $dia;
+            $fechaActual = Carbon::now();
+            $dia = $fechaActual->day;
+            $mes = $fechaActual->month;
+            $anio = $fechaActual->year;
+
+            $dia = ($dia) <= 9 ? '0'.$dia : $dia;
             $fecha_gen = $dia.' DE '.$meses[$mes-1].' DE '.$anio;
          }
 
@@ -328,36 +336,89 @@ class ReporteController extends Controller
                 ->First();
 
         $body = $this->create_body($id_curso, $info); //creacion de body
-        // $body = str_replace(["\r", "\n", "\f"], ' ', $body);
 
         $nameFileOriginal = 'Reporte fotografico '.$info->clave.'.pdf';
         $numOficio = 'REPORTE-'.$info->clave;
         $numFirmantes = '2';
 
         $arrayFirmantes = [];
-        $arrayAnexos = [];
         $arrayFotosbd = $fotosbd;
         $arrayMd5bd = $md5bd;
         $numAnexos = (string)count($arrayFotosbd);
 
-        // $dataFirmante = DB::connection('pgsql')->Table('tbl_organismos AS org')->Select('org.id','fun.nombre AS funcionario','fun.curp','fun.cargo','fun.correo','org.nombre')
-        //                     ->Join('tbl_funcionarios AS fun','fun.id','org.id')
-        //                     ->Where('org.id', Auth::user()->id_organismo)
-        //                     ->Where('org.nombre', 'LIKE', 'DEPARTAMENTO ACADEMICO%')
-        //                     ->OrWhere('org.id_parent', Auth::user()->id_organismo)
-        //                     // ->Where('org.nombre', 'NOT LIKE', 'CENTRO%')
-        //                     ->Where('org.nombre', 'LIKE', 'DEPARTAMENTO ACADEMICO%')
-        //                     ->First();
-
-
-        $dataFirmante = DB::connection('pgsql')->Table('tbl_organismos AS org')->Select('org.id', 'fun.nombre AS funcionario','fun.curp',
-        'fun.cargo','fun.correo', 'us.name', 'us.puesto')
+        ##OBTENEMOS DATOS DEL ACADEMICO
+        $dataFirmante = DB::connection('pgsql')->Table('tbl_organismos AS org')
+        ->Select('fun.id as id_fun','org.id', 'fun.nombre AS funcionario','fun.curp', 'us.name',
+        'fun.cargo','fun.correo', 'us.puesto', 'fun.incapacidad')
             ->join('tbl_funcionarios AS fun', 'fun.id','org.id')
             ->join('users as us', 'us.email','fun.correo')
-            ->where('org.nombre', 'ILIKE', 'DELEGACIÓN ADMINISTRATIVA UC '.$info->ubicacion.'%')
+            ->where('org.nombre', 'LIKE', '%ACADEMICO%')
+            ->where('org.nombre', 'LIKE', '%'.$info->ubicacion.'%')
             ->first();
         if($dataFirmante == null){
-            return "NO SE ENCONTRON DATOS DEL FIRMANTE";
+            return "NO SE ENCONTRON DATOS DEL ACADEMICO!";
+        }
+
+
+        ##INCAPACIDAD DEL FIRMANTE
+        $status_campos = false;
+        if($dataFirmante->incapacidad != null){
+            $dataArray = json_decode($dataFirmante->incapacidad, true);
+
+            ##Validamos los campos json
+            if(isset($dataArray['fecha_inicio']) && isset($dataArray['fecha_termino'])
+            && isset($dataArray['id_firmante']) && isset($dataArray['historial'])){
+
+                if($dataArray['fecha_inicio'] != '' && $dataArray['fecha_termino'] != '' && $dataArray['id_firmante'] != ''){
+                    $fecha_ini = $dataArray['fecha_inicio'];
+                    $fecha_fin = $dataArray['fecha_termino'];
+                    $id_firmante = $dataArray['id_firmante'];
+                    $historial = $dataArray['historial'];
+                    $status_campos = true;
+                }
+            }else{
+                return "LA ESTRUCTURA DEL JSON DE LA INCAPACIDAD NO ES VALIDA!";
+            }
+
+            ##Validar si esta vacio
+            if($status_campos == true){
+                ##Validar las fechas
+                $fechaActual = date("Y-m-d");
+                $fecha_nowObj = new DateTime($fechaActual);
+                $fecha_iniObj = new DateTime($fecha_ini);
+                $fecha_finObj = new DateTime($fecha_fin);
+
+                if($fecha_nowObj >= $fecha_iniObj && $fecha_nowObj <= $fecha_finObj){
+                    ###Realizamos la consulta del nuevo firmante
+                    $dataIncapacidad = DB::connection('pgsql')->Table('tbl_organismos AS org')
+                    ->Select('org.id', 'fun.nombre AS funcionario','fun.curp', 'us.name',
+                    'fun.cargo','fun.correo', 'us.puesto', 'fun.incapacidad')
+                    ->join('tbl_funcionarios AS fun', 'fun.id','org.id')
+                    ->join('users as us', 'us.email','fun.correo')
+                    ->where('fun.id', $id_firmante)
+                    ->first();
+
+                    if ($dataIncapacidad != null) {$dataFirmante = $dataIncapacidad;}
+                    else{return "NO SE ENCONTRON DATOS DE LA PERSONA QUE TOMARÁ EL LUGAR DEL ACADEMICO!";}
+                }else{
+                    ##Historial
+                    $fecha_busqueda = 'Ini:'. $fecha_ini .'/Fin:'. $fecha_fin .'/IdFun:'. $id_firmante;
+                    $clave_ar = array_search($fecha_busqueda, $historial);
+
+                    if($clave_ar === false){ ##No esta en el historial entonces guardamos
+                        $historial[] = $fecha_busqueda;
+                        ##guardar en la bd el nuevo array en el campo historial del json
+                        try {
+                            $jsonHistorial = json_encode($historial);
+                            DB::connection('pgsql')->update('UPDATE tbl_funcionarios SET incapacidad = jsonb_set(incapacidad, \'{historial}\', ?) WHERE id = ?', [$jsonHistorial, $dataFirmante->id_fun]);
+                        } catch (\Throwable $th) {
+                            return "Error: " . $th->getMessage();
+                        }
+
+                    }
+                }
+            }
+
         }
 
         //Llenado de funcionarios firmantes
@@ -385,9 +446,7 @@ class ReporteController extends Controller
         $anexos = [];
         for ($i = 0; $i < count($arrayFotosbd); $i++) {
             $nombreAnexo = basename($arrayFotosbd[$i]);
-            ##Partimos la cadena a partir del punto
-            $partes = explode(".", $nombreAnexo);
-            $nombreArchivo = $partes[0].'.pdf';
+            $nombreArchivo = $nombreAnexo;
 
             $md5Anexo = $arrayMd5bd[$i];
 
@@ -400,7 +459,7 @@ class ReporteController extends Controller
             $anexos[] = $tmp_anexo;
         }
 
-        // dd($arrayFirmantes);
+        ### XML CON FOTOS
         $ArrayXml = [
             'emisor' => [
                 '_attributes' => [
@@ -473,10 +532,6 @@ class ReporteController extends Controller
 
         //Guardado de cadena unica
         if ($response->json()['cadenaOriginal'] != null) {
-            // $urlFile = $this->uploadFileServer($request->file('doc'), $nameFileOriginal);
-            // $urlFile = $this->uploadFileServer($request->file('doc'), $nameFile);
-            // $datas = explode('*',$urlFile);
-
 
             $dataInsert = DocumentosFirmar::Where('numero_o_clave',$info->clave)->Where('tipo_archivo','Reporte fotografico')->First();
             if(is_null($dataInsert)) {
@@ -485,21 +540,17 @@ class ReporteController extends Controller
             $dataInsert->obj_documento_interno = json_encode($ArrayXml);
             $dataInsert->obj_documento = json_encode($ArrayXml);
             $dataInsert->status = 'EnFirma';
-            // $dataInsert->link_pdf = $urlFile;
             $dataInsert->cadena_original = $response->json()['cadenaOriginal'];
             $dataInsert->tipo_archivo = 'Reporte fotografico';
             $dataInsert->numero_o_clave = $info->clave;
             $dataInsert->nombre_archivo = $nameFileOriginal;
             $dataInsert->documento = $result;
             $dataInsert->documento_interno = $result;
-            // $dataInsert->md5_file = $md5;
             $dataInsert->save();
-
-            // return redirect()->route('reporte.inicio')->with('success', 'Reporte fotografico Validado Exitosamente!');
             return "EXITOSO";
+
         } else {
             return "ERROR AL ENVIAR Y VALIDAR. INTENTE NUEVAMENTE EN UNOS MINUTOS";
-            // return redirect()->route('reporte.inicio')->with('alert', 'Hubo un Error al Validar. Intente Nuevamente en unos Minutos.');
         }
     }
 
@@ -531,8 +582,13 @@ class ReporteController extends Controller
 
         ##Procesar fecha del envio de documento
         $meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
-        $dia = date('d'); $mes = date('m'); $anio = date('Y');
-        $dia = ($dia) < 10 ? '0'.$dia : $dia;
+
+        $fechaActual = Carbon::now();
+        $dia = $fechaActual->day;
+        $mes = $fechaActual->month;
+        $anio = $fechaActual->year;
+
+        $dia = ($dia) <= 9 ? '0'.$dia : $dia;
         $fecha_gen = $dia.' DE '.$meses[$mes-1].' DE '.$anio;
 
 
@@ -541,7 +597,7 @@ class ReporteController extends Controller
         $body = $leyenda."\n".
         "\n REPORTE FOTOGRÁFICO DEL INSTRUCTOR\n".
         "\n UNIDAD DE CAPACITACIÓN ".$curso->ubicacion. $valid_accionmovil.
-        "\n ".strtoupper($curso->municipio).", CHIAPAS. A ".$fecha_gen.".\n";
+        "\n ".mb_strtoupper($curso->municipio, 'UTF-8').", CHIAPAS. A ".$fecha_gen.".\n";
 
         $body .= "\n CURSO: ". $curso->curso.
         "\n TIPO: ". $curso->tcapacitacion.
