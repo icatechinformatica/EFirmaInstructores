@@ -116,11 +116,11 @@
     </div> --}}
     {{-- Lugar --}}
     <div style="text-align: right;">
-        <p style="font-size: 14px; margin-bottom: 3px;">UNIDAD DE CAPACITACIÓN {{$cursopdf->ubicacion}}
+        <p style="font-size: 14px; margin-bottom: 3px;">
         @if ($cursopdf->ubicacion != $cursopdf->unidad)
-        , ACCIÓN MOVIL {{$cursopdf->unidad}}.
+        UNIDAD DE CAPACITACIÓN {{$cursopdf->ubicacion}}, ACCIÓN MOVIL {{$cursopdf->unidad}}.
         @else
-
+        UNIDAD DE CAPACITACIÓN {{$cursopdf->ubicacion}}.
         @endif
         </p>
         <p style="font-size: 14px; margin-top: 3px;">{{mb_strtoupper($cursopdf->municipio, 'UTF-8')}}, CHIAPAS. A {{$fecha_gen}}.</p>
@@ -156,7 +156,7 @@
                 @foreach($base64Images as $key => $base64)
                         {{-- <img style="width: 350px; height: 350px; margin: 5px;" src="data:image/jpeg;base64,{{$base64}}" alt="Foto"> --}}
                         {{-- <img style="width: 600px; height: 600px;" src="data:image/jpeg;base64,{{$base64}}" alt="Foto"> --}}
-                        @if ($key != 2)
+                        @if ($key != (count($base64Images)-1))
                             <div style="page-break-after: always;">
                                 <img style="width: auto; height: auto; max-width: 100%; max-height:100%;" src="data:image/jpeg;base64,{{$base64}}" alt="Foto">
                             </div>
