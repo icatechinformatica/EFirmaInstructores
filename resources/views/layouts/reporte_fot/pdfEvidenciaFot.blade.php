@@ -107,22 +107,23 @@
             @endif
         </div>
     </footer>
-    <div style="margin-top: -13%;">
+    <div style="margin-top: -13%; margin-bottom:-13px;">
         <h6 style="text-align: center;">{{isset($leyenda) ? $leyenda : ''}}</h6>
+        <span style="text-align: center; width:auto; display:block;">REPORTE FOTOGRÁFICO DEL INSTRUCTOR</span>
     </div>
-    <div style="text-align: center;">
+    {{-- <div style="text-align: center;">
         <span style="text-align: center;">REPORTE FOTOGRÁFICO DEL INSTRUCTOR</span>
-    </div>
+    </div> --}}
     {{-- Lugar --}}
     <div style="text-align: right;">
-        <p style="">Unidad de Capacitación {{ucfirst(strtolower($cursopdf->ubicacion))}}
+        <p style="font-size: 14px; margin-bottom: 3px;">UNIDAD DE CAPACITACIÓN {{$cursopdf->ubicacion}}
         @if ($cursopdf->ubicacion != $cursopdf->unidad)
-        , Accion Movil {{ucfirst(strtolower($cursopdf->unidad))}}.
+        , ACCIÓN MOVIL {{$cursopdf->unidad}}.
         @else
 
         @endif
         </p>
-        <p>{{ucfirst(strtolower($cursopdf->unidad))}}, Chiapas. A {{$fecha_gen}}.</p>
+        <p style="font-size: 14px; margin-top: 3px;">{{mb_strtoupper($cursopdf->municipio, 'UTF-8')}}, CHIAPAS. A {{$fecha_gen}}.</p>
     </div>
     {{-- tabla --}}
     @if ($cursopdf)
@@ -149,14 +150,21 @@
             </tbody>
         </table>
         <br>
-        <br>
-        <br>
-        <br>
         {{-- Mostrar imagenes --}}
         @if (count($base64Images) > 0)
             <div class="" style="text-align: center;">
-                @foreach($base64Images as $base64)
-                    <img style="width: 350px; height: 350px; margin: 5px;" src="data:image/jpeg;base64,{{$base64}}" alt="Foto">
+                @foreach($base64Images as $key => $base64)
+                        {{-- <img style="width: 350px; height: 350px; margin: 5px;" src="data:image/jpeg;base64,{{$base64}}" alt="Foto"> --}}
+                        {{-- <img style="width: 600px; height: 600px;" src="data:image/jpeg;base64,{{$base64}}" alt="Foto"> --}}
+                        @if ($key != 2)
+                            <div style="page-break-after: always;">
+                                <img style="width: auto; height: auto; max-width: 100%; max-height:100%;" src="data:image/jpeg;base64,{{$base64}}" alt="Foto">
+                            </div>
+                        @else
+                            <div style="">
+                                <img style="width: auto; height: auto; max-width: 100%; max-height:100%;" src="data:image/jpeg;base64,{{$base64}}" alt="Foto">
+                            </div>
+                        @endif
                 @endforeach
             </div>
         @endif

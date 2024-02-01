@@ -24,7 +24,6 @@ use Illuminate\Support\Str;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
-
 class ReporteController extends Controller
 {
 
@@ -249,36 +248,60 @@ class ReporteController extends Controller
 
     #Generar reporte pdf
     public function repofotoPdf(Request $request){
-
+        $clave = $request->clave_curso;
         $path_files = $this->path_files;
         $array_fotos = [];
-        #Distintivo
-        $leyenda = DB::connection('pgsql')->table('tbl_instituto')->value('distintivo');
+        $fecha_gen = '';
 
+        ###Fechas en caso de que ya este en la bd
+        $meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
 
-        $clave = $request->clave_curso;
-        $cursopdf = tbl_cursos::select('nombre', 'curso', 'tcapacitacion', 'inicio', 'termino', 'evidencia_fotografica',
+        ##Obtenemos el registro firmado con la clave
+        // $consulta_firma = DocumentosFirmar::where('numero_o_clave', $clave)
+        // ->where('tipo_archivo', 'Reporte fotografico')->first();
+
+        ##Consulta del curso
+        $cursopdf = tbl_cursos::select('nombre', 'curso', 'tcapacitacion', 'inicio', 'termino', 'evidencia_fotografica', 'curp',
         'clave', 'hini', 'hfin', 'tbl_cursos.unidad', 'uni.dunidad', 'uni.ubicacion', 'uni.direccion', 'uni.municipio')
         ->join('tbl_unidades as uni', 'uni.unidad', 'tbl_cursos.unidad')
         ->where('clave', '=', $clave)->first();
 
-        if (isset($cursopdf->evidencia_fotografica['url_fotos'])){
-            $array_fotos = $cursopdf->evidencia_fotografica['url_fotos'];
-        }
+        ##Validacion de fechas
+        // if ($consulta_firma != null) {
+        //     $documento_firmado = json_decode($consulta_firma->obj_documento, true);
+        // }
+        // if (isset($documento_firmado['firmantes']['firmante'][0][0]['_attributes']['fecha_firmado_firmante'])) {
+        //     $fech_firma_firmante = $documento_firmado['firmantes']['firmante'][0][0]['_attributes']['fecha_firmado_firmante'];
+        //     $partes = explode('T', $fech_firma_firmante);
+        //     $fecha_part = $partes[0];
+        //     [$aniof, $mesf, $diaf] = explode('-', $fecha_part);
+        //     $fecha_gen = $diaf. ' de '.$meses[$mesf-1].' de '.$aniof;
 
-        ###Fechas en caso de que ya este en la bd
-        $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        // }else{
+        //     $dia = date('d'); $mes = date('m'); $anio = date('Y');
+        //     $dia = ($dia) < 10 ? '0'.$dia : $dia;
+        //     $fecha_gen = $dia.' de '.$meses[$mes-1].' de '.$anio;
 
-        if (isset($cursopdf->evidencia_fotografica["fecha_envio"])) {
-            $fechapdf = $cursopdf->evidencia_fotografica["fecha_envio"];
-            $fechaCarbon = Carbon::createFromFormat('Y-m-d', $fechapdf);
-            $dia = ($fechaCarbon->day) < 10 ? '0'.$fechaCarbon->day : $fechaCarbon->day;
-            $fecha_gen = $dia.' de '.$meses[$fechaCarbon->month-1].' de '.$fechaCarbon->year;
-        }else{
-            #Unidad de capacitacion
+        // }
+
+         if (isset($cursopdf->evidencia_fotografica["fecha_envio"])) {
+             $fechapdf = $cursopdf->evidencia_fotografica["fecha_envio"];
+             $fechaCarbon = Carbon::createFromFormat('Y-m-d', $fechapdf);
+             $dia = ($fechaCarbon->day) < 10 ? '0'.$fechaCarbon->day : $fechaCarbon->day;
+             $fecha_gen = $dia.' DE '.$meses[$fechaCarbon->month-1].' DE '.$fechaCarbon->year;
+         }else{
             $dia = date('d'); $mes = date('m'); $anio = date('Y');
             $dia = ($dia) < 10 ? '0'.$dia : $dia;
-            $fecha_gen = $dia.' de '.$meses[$mes-1].' de '.$anio;
+            $fecha_gen = $dia.' DE '.$meses[$mes-1].' DE '.$anio;
+         }
+
+        #Distintivo
+        $leyenda = DB::connection('pgsql')->table('tbl_instituto')->value('distintivo');
+
+
+        ##procesaro imagenes
+        if (isset($cursopdf->evidencia_fotografica['url_fotos'])){
+            $array_fotos = $cursopdf->evidencia_fotografica['url_fotos'];
         }
 
         $base64Images = [];
@@ -305,7 +328,7 @@ class ReporteController extends Controller
                 ->First();
 
         $body = $this->create_body($id_curso, $info); //creacion de body
-        $body = str_replace(["\r", "\n", "\f"], ' ', $body);
+        // $body = str_replace(["\r", "\n", "\f"], ' ', $body);
 
         $nameFileOriginal = 'Reporte fotografico '.$info->clave.'.pdf';
         $numOficio = 'REPORTE-'.$info->clave;
@@ -507,23 +530,28 @@ class ReporteController extends Controller
         }
 
         ##Procesar fecha del envio de documento
-        $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        $meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
         $dia = date('d'); $mes = date('m'); $anio = date('Y');
         $dia = ($dia) < 10 ? '0'.$dia : $dia;
-        $fecha_gen = $dia.' de '.$meses[$mes-1].' de '.$anio;
+        $fecha_gen = $dia.' DE '.$meses[$mes-1].' DE '.$anio;
 
 
-        $valid_accionmovil = ($curso->unidad != $curso->ubicacion) ? ', Acción Movil '.$curso->unidad : ' ';
+        $valid_accionmovil = ($curso->unidad != $curso->ubicacion) ? ', ACCIÓN MOVIL '.$curso->unidad : ' ';
 
-        $body = $leyenda."\n\n".'REPORTE FOTOGRÁFICO DEL INSTRUCTOR'."\n".
-        'Unidad de Capacitación '.$curso->municipio. $valid_accionmovil."\n".
-        $curso->municipio.', Chiapas. A '.$fecha_gen.'.'."\n\n";
+        $body = $leyenda."\n".
+        "\n REPORTE FOTOGRÁFICO DEL INSTRUCTOR\n".
+        "\n UNIDAD DE CAPACITACIÓN ".$curso->ubicacion. $valid_accionmovil.
+        "\n ".strtoupper($curso->municipio).", CHIAPAS. A ".$fecha_gen.".\n";
 
-        $body .= 'CURSO: '. $curso->curso."\n".
-        ' TIPO: '. $curso->tcapacitacion. ' FECHA DE INICIO: '. $curso->fechaini. ' FECHA DE TÉRMINO: '. $curso->fechafin."\n".
-        ' CLAVE: '. $curso->clave. ' HORARIO: '. $curso->hini. ' A '. $curso->hfin."\n".
-        ' NOMBRE DEL TITULAR DE LA U.C: '. $curso->dunidad.' NOMBRE DEL INSTRUCTOR: '. $curso->nombre."\n\n".
-        $direcSinAsteriscos;
+        $body .= "\n CURSO: ". $curso->curso.
+        "\n TIPO: ". $curso->tcapacitacion.
+        "\n FECHA DE INICIO: ". $curso->fechaini.
+        "\n FECHA DE TÉRMINO: ". $curso->fechafin.
+        "\n CLAVE: ". $curso->clave.
+        "\n HORARIO: ". $curso->hini. ' A '. $curso->hfin.
+        "\n NOMBRE DEL TITULAR DE LA U.C: ". $curso->dunidad.
+        "\n NOMBRE DEL INSTRUCTOR: ". $curso->nombre."\n".
+        "\n ".$direcSinAsteriscos;
 
         return $body;
     }
@@ -544,7 +572,6 @@ class ReporteController extends Controller
         //     'nombre' => 'FirmaElectronica',
         //     'key' => '19106D6F-E91F-4C20-83F1-1700B9EBD553'
         // ]);
-
 
         $token = $resToken->json();
         Tokens_icti::create([
