@@ -36,7 +36,7 @@ class CalificacionesController extends Controller {
                 else $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 1 days"));
                 $fecha_valida =  strtotime($fecha_hoy) - strtotime($fecha_penultimo);
 
-                if ($curso->turnado == "UNIDAD" and $curso->status != "REPORTADO" and $curso->status != "CANCELADO") {
+                if ($curso->status_curso == "AUTORIZADO") {
                     $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select('i.id', 'i.matricula', 'i.alumno', 'i.calificacion', 'f.folio')
                         ->leftJoin('tbl_folios as f', function ($join) {
                             $join->on('f.id', '=', 'i.id_folio');
@@ -44,7 +44,7 @@ class CalificacionesController extends Controller {
                         ->where('i.id_curso', $curso->id)->where('i.status', 'INSCRITO')->orderby('i.alumno')->get();
 
                     if ($fecha_valida < 0) $message = "No prodece el registro de calificaciones, la fecha de termino del curso es el $curso->termino.";
-                } else $message = "El Curso fué $curso->status y turnado a $curso->turnado.";
+                } else $message = "El Curso fué $curso->status.";
 
                 if(count($alumnos)==0 AND !$message) $message = "El curso no tiene alumnos registrados. ";
                 else $_SESSION['id_curso'] = $curso->id;

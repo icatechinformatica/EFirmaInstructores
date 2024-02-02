@@ -67,7 +67,7 @@
                         </div>
                     @elseif($message == 'noDisponible')
                         <div class="alert alert-success mt-4">
-                            <p>El Curso fué {{$curso->status}} y turnado a {{$curso->turnado}}.</p>
+                            <p>Acceso denegado: El Curso fué {{$curso->status}}.</p>
                         </div>
                     @else
                         @if (count($alumnos) > 0)
