@@ -71,7 +71,7 @@ class AsistenciaController extends Controller
 
                 // if ($fecha_valida < 0) $message = 'noProcede';
 
-                if ($curso->turnado == "UNIDAD" and $curso->status != "REPORTADO" and $curso->status != "CANCELADO") {
+                if ($curso->status_curso == "AUTORIZADO") {
                     $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select(
                             'i.id',
                             'i.matricula',
