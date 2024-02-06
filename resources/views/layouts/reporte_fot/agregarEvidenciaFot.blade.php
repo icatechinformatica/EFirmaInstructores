@@ -173,8 +173,9 @@
                             {{-- Mostrar imagenes --}}
                             @if (count($array_fotos) > 0)
                             <div class="col-12 mt-2 row">
-                                @foreach ($array_fotos as $foto)
+                                @foreach ($array_fotos as $key => $foto)
                                     <div class="d-flex foto">
+                                        <input type="text" style="font-size: 20px; width: 25px; height: 25px; text-align: center;" id="input{{$key}}" value="{{$key+1}}">
                                         <img class="" src="{{$path_files.$foto}}" alt="Foto">
                                     </div>
                                 @endforeach
@@ -195,6 +196,9 @@
 
                             {{-- boton generar pdf --}}
                             <div class="col-8">
+                                @if (count($array_fotos) > 0)
+                                    <button id="btnOrdenar" type="button" class="btn btn-info mt-1" onclick="orderarImg({{ json_encode($array_fotos) }}, {{$curso->id}})">ORDENAR IMG</button>
+                                @endif
                                 <button id="btnGenerar" type="button" class="btn btn-info mt-1" onclick="">GENERAR PDF</button>
                                 @if ($status_documento == "" || $status_documento == 'RETORNADO')
                                 <button id="btnSaveImg" type="button" class="btn btn-info mt-1" onclick="enviarImgServ({{$curso->id}})">GUARDAR FOTOS</button>
@@ -276,7 +280,7 @@
         var imagenesGlobal = "";
         var numImagenesG = "";
 
-        document.getElementById('inputFile').addEventListener('change', function (event) {
+    document.getElementById('inputFile').addEventListener('change', function (event) {
         const input = event.target;
         imagenesGlobal = input; //Agregamos datos a la variable global
         const cantidad_imagen = event.target.files.length
@@ -304,6 +308,7 @@
 
         //MOSTRAR IMAGEN A LA VISTA
         imageContainer.innerHTML = '';
+
         for (const file of input.files) {
             const reader = new FileReader();
             reader.onload = function (e) {
@@ -378,6 +383,61 @@
         if(make == 'hide') make = 'none';
         if(make == 'show') make = 'block';
         document.getElementById('loader-overlay').style.display = make;
+    }
+
+    //ORDENAR IMAGEN
+    function orderarImg(fotos, id_curso) {
+        array_input = [];
+        for (let i = 0; i < fotos.length; i++) {
+            const valinput = document.getElementById("input"+i).value;
+            if (valinput != '') {
+                const numero = parseInt(valinput);
+                array_input.push(numero);
+            }
+        }
+
+        //VALIDAR SI HAY CAMPOS VACIOS
+        if (fotos.length != array_input.length) {
+            alert("Campos Vacios");
+            return;
+        }
+
+        //VALIDAR SI HAY REPETIDOS
+        //false no hay repetidos    true hay repetidos
+        let repetido = tieneRepetidos(array_input);
+        if (repetido == true) {
+            alert("Verifique que los números no se repitan");
+            return;
+        }
+
+        //ENVIAMOS LOS DATOS POR AJAX
+        //Ajax para enviar el array de datos
+        let data = {
+            "_token": $("meta[name='csrf-token']").attr("content"),
+            "array_fotos": fotos,
+            "array_orden": array_input,
+            "id_curso": id_curso
+        }
+        $.ajax({
+            type:"post",
+            url: "{{ route('ordenar.fotos') }}",
+            data: data,
+            dataType: "json",
+            success: function (response) {
+                // console.log(response);
+                alert(response.message);
+                location.reload();
+            }
+        });
+
+
+    }
+
+    //VALIDA SI HAY REPETIDOS
+    function tieneRepetidos(arr) {
+        let setDeElementos = new Set(arr);
+        // Compara las longitudes del array original y el Set
+        return arr.length !== setDeElementos.size;
     }
     </script>
 @endsection
