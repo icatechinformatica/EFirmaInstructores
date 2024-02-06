@@ -657,4 +657,48 @@ class ReporteController extends Controller
         return $response1;
     }
 
+    ## obtener posiciones y ordernar
+    public function ordenar_fotos(Request $request){
+        $array_orden = $request->array_orden;
+        // $array_orden = [0,1,2];
+        // $array_fotos = $request->array_fotos;
+        $id_curso = $request->id_curso;
+
+        ##Hacemos una consulta de fotos y md5
+        $consultaBD = tbl_cursos::select('evidencia_fotografica')->where('id', '=', $id_curso)->first();
+        if ($consultaBD == null) {
+            return response()->json(['status' => 400, 'message' => 'Hubo un error al realizar la consulta a la base de datos']);
+        }
+
+        $array_fotos = $consultaBD->evidencia_fotografica['url_fotos'];
+        $array_md5 = $consultaBD->evidencia_fotografica['md5_fotos'];
+
+        $orden_md5 = $orden_fotos = [];
+
+        for ($i=0; $i < count($array_fotos); $i++) {
+            $foto = $array_fotos[intval($array_orden[$i])-1];
+            $md5 = $array_md5[intval($array_orden[$i])-1];
+            array_push($orden_fotos, $foto);
+            array_push($orden_md5, $md5);
+        }
+
+        ##Validamos si el tamaño del array nuevo es igual al anterior
+        if (count($array_fotos) != count($orden_fotos)) {
+            return response()->json(['status' => 400, 'message' => 'Valida que el orden sea el correcto']);
+        }
+
+        ##faltan guardar los array de fotos y md5
+        try {
+            $curso = tbl_cursos::find($id_curso);
+            $json = $curso->evidencia_fotografica;
+            $json['url_fotos'] = $orden_fotos;
+            $json['md5_fotos'] = $orden_md5;
+            $curso->evidencia_fotografica = $json;
+            $curso->save();
+            return response()->json(['status' => 200, 'message' => 'Imagenes ordenadas correctamente']);
+        } catch (\Throwable $th) {
+            return response()->json(['status' => 500, 'message' => 'Hubo un error al intentar insertar en la base de datos']);
+        }
+    }
+
 }
