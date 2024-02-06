@@ -408,9 +408,11 @@
                                                             </small>
                                                         </td>
                                                         <td><small>{{$docCancelado->created_at->format('d-m-Y')}}</small></td>
-                                                        <td><small>{{$objCancelado['fecha']}}</small></td>
-                                                        <td><small>{{$objCancelado['motivo']}}</small></td>
-                                                        <td><small>{{$objCancelado['correo']}}</small></td>
+                                                        @if(isset($obCancelado['fecha']))
+                                                            <td><small>{{$objCancelado['fecha']}}</small></td>
+                                                            <td><small>{{$objCancelado['motivo']}}</small></td>
+                                                            <td><small>{{$objCancelado['correo']}}</small></td>
+                                                        @endif
                                                     </tr>
                                                 @endforeach
                                             </tbody>
