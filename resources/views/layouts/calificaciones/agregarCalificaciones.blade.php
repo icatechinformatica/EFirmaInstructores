@@ -112,7 +112,7 @@
                                     </tbody>
                                     <tfoot>
                                         <tr>
-                                            @if (count($alumnos) > 0 and $fecha_valida >= 0 and $cambios == true)
+                                            @if (count($alumnos) > 0 and $fecha_valida >= 0)
                                                 <td colspan="5" class="text-right">
                                                     <input class="d-none" type="text" id="calif_finalizado" value="{{$curso->calif_finalizado}}">
                                                     {{ Form::button('GENERAR LISTA DE CALIFICACIONES', ['id' => 'reporte', 'class' => 'btn btn-outline-info']) }}
