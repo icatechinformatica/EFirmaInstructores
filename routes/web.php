@@ -68,3 +68,4 @@ Route::get('/Reporte/inicio', 'reporte_fot\ReporteController@index')->name('repo
 Route::post('/Reporte/enviofotos', 'reporte_fot\ReporteController@catch_fotos')->name('reporte.fotos');
 Route::post('/Reporte/enviar', 'reporte_fot\ReporteController@reporteenviar')->name('reporte.enviar');
 Route::post('/Reporte/pdf', 'reporte_fot\ReporteController@repofotoPdf')->name('reporte.pdf');
+Route::post('/Reporte/ordenar', 'reporte_fot\ReporteController@ordenar_fotos')->name('ordenar.fotos');
