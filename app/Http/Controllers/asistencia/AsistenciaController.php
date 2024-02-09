@@ -139,6 +139,7 @@ class AsistenciaController extends Controller
         if ($clave) {
             // $curso = tbl_cursos::where('clave', '=', $clave)->first();
             $curso = DB::connection('pgsql')->table('tbl_cursos')->select(
+                'tbl_cursos.status_curso',
                 'tbl_cursos.*',
                 DB::raw('right(clave,4) as grupo'),
                 'inicio',
@@ -149,7 +150,7 @@ class AsistenciaController extends Controller
                 )->where('clave',$clave);
             $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first();
             if ($curso) {
-                if ($curso->turnado == "UNIDAD" and $curso->status != "REPORTADO" and $curso->status != "CANCELADO") {
+                if ($curso->status_curso == "AUTORIZADO") {
                     $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select(
                         'i.id',
                         'i.matricula',
@@ -194,6 +195,7 @@ class AsistenciaController extends Controller
         if ($clave) {
             // $curso = tbl_cursos::where('clave', '=', $clave)->first();
             $curso = DB::connection('pgsql')->table('tbl_cursos')->select(
+                'tbl_cursos.status_curso',
                 'tbl_cursos.*',
                 DB::raw('right(clave,4) as grupo'),
                 'inicio',
@@ -204,7 +206,7 @@ class AsistenciaController extends Controller
                 )->where('clave',$clave);
             $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first();
             if ($curso) {
-                if ($curso->turnado == "UNIDAD" and $curso->status != "REPORTADO" and $curso->status != "CANCELADO") {
+                if ($curso->status_curso == "AUTORIZADO") {
                     tbl_cursos::where('id', $curso->id)->update(['asis_finalizado' => true]);
                     return redirect()->route('asistencia.inicio')->with('success', 'ASISTENCIAS ENVIADAS EXITOSAMENTE!');
                 }
