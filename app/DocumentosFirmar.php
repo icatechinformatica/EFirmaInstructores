@@ -5,13 +5,13 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 
 class DocumentosFirmar extends Model {
-    
+
     protected $connection = "pgsql";
 
     protected $table = 'documentos_firmar';
 
     protected $fillable = [
-        'obj_documento', 'status', 'link_pdf', 'documento'
+        'obj_documento', 'status', 'link_pdf', 'documento','link_verificacion'
     ];
 
     protected $casts = [
