@@ -338,7 +338,7 @@ class ReporteController extends Controller
         $body = $this->create_body($id_curso, $info); //creacion de body
 
         $nameFileOriginal = 'Reporte fotografico '.$info->clave.'.pdf';
-        $numOficio = 'REPORTE-'.$info->clave;
+        $numOficio = 'REPORTE-FOTOGRAFICO-'.$info->clave;
         $numFirmantes = '2';
 
         $arrayFirmantes = [];
@@ -350,76 +350,22 @@ class ReporteController extends Controller
         $dataFirmante = DB::connection('pgsql')->Table('tbl_organismos AS org')
         ->Select('fun.id as id_fun','org.id', 'fun.nombre AS funcionario','fun.curp', 'us.name',
         'fun.cargo','fun.correo', 'us.puesto', 'fun.incapacidad')
-            ->join('tbl_funcionarios AS fun', 'fun.id','org.id')
+            ->join('tbl_funcionarios AS fun', 'fun.id_org','org.id')
             ->join('users as us', 'us.email','fun.correo')
             ->where('org.nombre', 'LIKE', '%ACADEMICO%')
             ->where('org.nombre', 'LIKE', '%'.$info->ubicacion.'%')
+            ->where('fun.activo', '=', 'true')
             ->first();
         if($dataFirmante == null){
             return "NO SE ENCONTRON DATOS DEL ACADEMICO!";
         }
 
-
-        ##INCAPACIDAD DEL FIRMANTE
-        $status_campos = false;
-        if($dataFirmante->incapacidad != null){
-            $dataArray = json_decode($dataFirmante->incapacidad, true);
-
-            ##Validamos los campos json
-            if(isset($dataArray['fecha_inicio']) && isset($dataArray['fecha_termino'])
-            && isset($dataArray['id_firmante']) && isset($dataArray['historial'])){
-
-                if($dataArray['fecha_inicio'] != '' && $dataArray['fecha_termino'] != '' && $dataArray['id_firmante'] != ''){
-                    $fecha_ini = $dataArray['fecha_inicio'];
-                    $fecha_fin = $dataArray['fecha_termino'];
-                    $id_firmante = $dataArray['id_firmante'];
-                    $historial = $dataArray['historial'];
-                    $status_campos = true;
-                }
-            }else{
-                return "LA ESTRUCTURA DEL JSON DE LA INCAPACIDAD NO ES VALIDA!";
-            }
-
-            ##Validar si esta vacio
-            if($status_campos == true){
-                ##Validar las fechas
-                $fechaActual = date("Y-m-d");
-                $fecha_nowObj = new DateTime($fechaActual);
-                $fecha_iniObj = new DateTime($fecha_ini);
-                $fecha_finObj = new DateTime($fecha_fin);
-
-                if($fecha_nowObj >= $fecha_iniObj && $fecha_nowObj <= $fecha_finObj){
-                    ###Realizamos la consulta del nuevo firmante
-                    $dataIncapacidad = DB::connection('pgsql')->Table('tbl_organismos AS org')
-                    ->Select('org.id', 'fun.nombre AS funcionario','fun.curp', 'us.name',
-                    'fun.cargo','fun.correo', 'us.puesto', 'fun.incapacidad')
-                    ->join('tbl_funcionarios AS fun', 'fun.id','org.id')
-                    ->join('users as us', 'us.email','fun.correo')
-                    ->where('fun.id', $id_firmante)
-                    ->first();
-
-                    if ($dataIncapacidad != null) {$dataFirmante = $dataIncapacidad;}
-                    else{return "NO SE ENCONTRON DATOS DE LA PERSONA QUE TOMARÁ EL LUGAR DEL ACADEMICO!";}
-                }else{
-                    ##Historial
-                    $fecha_busqueda = 'Ini:'. $fecha_ini .'/Fin:'. $fecha_fin .'/IdFun:'. $id_firmante;
-                    $clave_ar = array_search($fecha_busqueda, $historial);
-
-                    if($clave_ar === false){ ##No esta en el historial entonces guardamos
-                        $historial[] = $fecha_busqueda;
-                        ##guardar en la bd el nuevo array en el campo historial del json
-                        try {
-                            $jsonHistorial = json_encode($historial);
-                            DB::connection('pgsql')->update('UPDATE tbl_funcionarios SET incapacidad = jsonb_set(incapacidad, \'{historial}\', ?) WHERE id = ?', [$jsonHistorial, $dataFirmante->id_fun]);
-                        } catch (\Throwable $th) {
-                            return "Error: " . $th->getMessage();
-                        }
-
-                    }
-                }
-            }
-
+        $val_incap = $this->valid_incapacidad($dataFirmante);
+        if ($val_incap != null) {
+            $dataFirmante = $val_incap;
         }
+
+        // dd($dataFirmante);
 
         //Llenado de funcionarios firmantes
         $temp = ['_attributes' =>
@@ -552,6 +498,71 @@ class ReporteController extends Controller
         } else {
             return "ERROR AL ENVIAR Y VALIDAR. INTENTE NUEVAMENTE EN UNOS MINUTOS";
         }
+    }
+
+    ## VALIDACIÓN DE LA INCAPACIDAD DEL FIRMANTE
+    private function valid_incapacidad($dataFirmante){
+        $result = null;
+        $status_campos = false;
+        if($dataFirmante->incapacidad != null){
+            $dataArray = json_decode($dataFirmante->incapacidad, true);
+
+            ##Validamos los campos json
+            if(isset($dataArray['fecha_inicio']) && isset($dataArray['fecha_termino'])
+            && isset($dataArray['id_firmante']) && isset($dataArray['historial'])){
+
+                if($dataArray['fecha_inicio'] != '' && $dataArray['fecha_termino'] != '' && $dataArray['id_firmante'] != ''){
+                    $fecha_ini = $dataArray['fecha_inicio'];
+                    $fecha_fin = $dataArray['fecha_termino'];
+                    $id_firmante = $dataArray['id_firmante'];
+                    $historial = $dataArray['historial'];
+                    $status_campos = true;
+                }
+            }else{
+                return "LA ESTRUCTURA DEL JSON DE LA INCAPACIDAD NO ES VALIDA!";
+            }
+
+            ##Validar si esta vacio
+            if($status_campos == true){
+                ##Validar las fechas
+                $fechaActual = date("Y-m-d");
+                $fecha_nowObj = new DateTime($fechaActual);
+                $fecha_iniObj = new DateTime($fecha_ini);
+                $fecha_finObj = new DateTime($fecha_fin);
+
+                if($fecha_nowObj >= $fecha_iniObj && $fecha_nowObj <= $fecha_finObj){
+                    ###Realizamos la consulta del nuevo firmante
+                    $dataIncapacidad = DB::connection('pgsql')->Table('tbl_organismos AS org')
+                    ->Select('org.id', 'fun.nombre AS funcionario','fun.curp', 'us.name',
+                    'fun.cargo','fun.correo', 'us.puesto', 'fun.incapacidad')
+                    ->join('tbl_funcionarios AS fun', 'fun.id','org.id')
+                    ->join('users as us', 'us.email','fun.correo')
+                    ->where('fun.id', $id_firmante)
+                    ->first();
+
+                    if ($dataIncapacidad != null) {$result = $dataIncapacidad;}
+                    else{return "NO SE ENCONTRON DATOS DE LA PERSONA QUE TOMARÁ EL LUGAR DEL ACADEMICO!";}
+                }else{
+                    ##Historial
+                    $fecha_busqueda = 'Ini:'. $fecha_ini .'/Fin:'. $fecha_fin .'/IdFun:'. $id_firmante;
+                    $clave_ar = array_search($fecha_busqueda, $historial);
+
+                    if($clave_ar === false){ ##No esta en el historial entonces guardamos
+                        $historial[] = $fecha_busqueda;
+                        ##guardar en la bd el nuevo array en el campo historial del json
+                        try {
+                            $jsonHistorial = json_encode($historial);
+                            DB::connection('pgsql')->update('UPDATE tbl_funcionarios SET incapacidad = jsonb_set(incapacidad, \'{historial}\', ?) WHERE id = ?', [$jsonHistorial, $dataFirmante->id_fun]);
+                        } catch (\Throwable $th) {
+                            return "Error: " . $th->getMessage();
+                        }
+
+                    }
+                }
+            }
+
+        }
+        return $result;
     }
 
     #Crear Cuerpo
