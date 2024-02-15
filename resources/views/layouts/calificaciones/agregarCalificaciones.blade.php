@@ -49,6 +49,11 @@
                             <p>Acceso denegado. El curso le pertenece a otro instructor</p>
                         </div>
                     @else
+                        @if ($procesoPago == TRUE)
+                            <div class="alert alert-info mt-4">
+                                <p>La información no es editable; ha sido validada.</p>
+                            </div>
+                        @endif
                         <div class="row bg-secondary mt-3" style="padding:20px">
                             <div class="form-group col-md-6">
                                 CURSO: <b>{{ $curso->curso }}</b>
@@ -116,7 +121,7 @@
                                                 <td colspan="5" class="text-right">
                                                     <input class="d-none" type="text" id="calif_finalizado" value="{{$curso->calif_finalizado}}">
                                                     {{ Form::button('GENERAR LISTA DE CALIFICACIONES', ['id' => 'reporte', 'class' => 'btn btn-outline-info']) }}
-                                                    @if (!$curso->calif_finalizado)
+                                                    @if (!$curso->calif_finalizado && !$procesoPago)
                                                         {{ Form::button('GUARDAR CAMBIOS', ['id' => 'guardar', 'class' => 'btn btn-outline-success']) }}
                                                         <button id="btnEnviar" type="button" class="btn btn-outline-danger">ENVIAR A UNIDAD</button>
                                                     @endif
