@@ -68,7 +68,7 @@ return [
             'url' => env('DATABASE_URL'),
             'host' => env('DB_HOST2', '127.0.0.1'),
             'port' => env('DB_PORT2', '5434'),
-            'database' => env('DB_DATABASE2', 'hoy'),
+            'database' => env('DB_DATABASE2', 'enero'),
             'username' => env('DB_USERNAME2', 'postgres'),
             'password' => env('DB_PASSWORD2', 'grande21'),
             'charset' => 'utf8',
