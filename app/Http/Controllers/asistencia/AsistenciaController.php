@@ -28,6 +28,7 @@ class AsistenciaController extends Controller
     // 7X-21-ARFT-EXT-0006
     public function index(Request $request) {
         $message = NULL;
+        $procesoPago = FALSE;
         $clave = $request->clave;
         if ($clave != null) session(['claveAsis' => $clave]);
         else $clave = session('claveAsis');
@@ -59,7 +60,7 @@ class AsistenciaController extends Controller
                 }
             }
 
-            if ($curso->curp == Auth::user()->curp) {
+            if ($curso->curp != Auth::user()->curp) {
                 $inicio = $curso->inicio;
                 $termino = $curso->termino;
                 for ($i = $inicio; $i <= $termino; $i = date("Y-m-d", strtotime($i . "+ 1 days"))) {
@@ -95,10 +96,15 @@ class AsistenciaController extends Controller
                     }
                 } else $message = 'noDisponible';
 
+                $pagos=DB::Connection('pgsql')->Table('pagos')->Where('id_curso',$curso->id)->Value('status_recepcion');
+                if(isset($pagos) && in_array($pagos, ['VALIDADO', 'En Espera'])) {
+                    $procesoPago = TRUE;
+                }
+
             } else $message = 'denegado';
 
         }
-        return view('layouts.asistencia.registrarAsistencias', compact('clave', 'curso', 'dias', 'alumnos', 'message'));
+        return view('layouts.asistencia.registrarAsistencias', compact('clave', 'curso', 'dias', 'alumnos', 'message','procesoPago'));
     }
 
     public function update(Request $request) {

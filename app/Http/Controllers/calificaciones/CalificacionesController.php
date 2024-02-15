@@ -26,6 +26,7 @@ class CalificacionesController extends Controller {
 
     public function index(Request $request) {
         $message = NULL;
+        $procesoPago = FALSE;
         if(session('message')) $message = session('message');
 
         $clave = $request->clave;
@@ -56,12 +57,17 @@ class CalificacionesController extends Controller {
 
                 if(count($alumnos)==0 AND !$message) $message = "El curso no tiene alumnos registrados. ";
                 else $_SESSION['id_curso'] = $curso->id;
+
+                $pagos=DB::Connection('pgsql')->Table('pagos')->Where('id_curso',$curso->id)->Value('status_recepcion');
+                if(isset($pagos) && in_array($pagos, ['VALIDADO', 'En Espera'])) {
+                    $procesoPago = TRUE;
+                }
             } else {
                 $denegado = 'denegado';
             }
         }// else $message = "Clave inválida.";
 
-        return view('layouts.calificaciones.agregarCalificaciones', compact('clave', 'curso', 'alumnos', 'message', 'fecha_valida', 'denegado'));
+        return view('layouts.calificaciones.agregarCalificaciones', compact('clave', 'curso', 'alumnos', 'message', 'fecha_valida', 'denegado','procesoPago'));
     }
 
     public function update(Request $request) {

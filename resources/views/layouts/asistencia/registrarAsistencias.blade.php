@@ -70,6 +70,11 @@
                             <p>Acceso denegado: El Curso fué {{$curso->status}}.</p>
                         </div>
                     @else
+                        @if ($procesoPago == TRUE)
+                            <div class="alert alert-info mt-4">
+                                <p>La información no es editable; ha sido validada.</p>
+                            </div>
+                        @endif
                         @if (count($alumnos) > 0)
                             <div class="row bg-secondary mt-3" style="padding:10px">
                                 <div class="form-group col-md-6">
@@ -146,7 +151,7 @@
                                 <input class="d-none" type="text" id="asis_finalizado" value="{{$curso->asis_finalizado}}">
                                 <div class="col d-flex justify-content-end mt-2">
                                     <button id="btnLista" type="button" class="btn btn-outline-info mr-2">GENERAR LISTA DE ASISTENCIA</button>
-                                    @if (!$curso->asis_finalizado)
+                                    @if (!$curso->asis_finalizado && !$procesoPago)
                                         <button id="btnGuardar" type="button" class="btn btn-outline-success mr-2">GUARDAR ASISTENCIAS</button>
                                         <button id="btnEnviar" type="button" class="btn btn-outline-danger">ENVIAR A UNIDAD</button>
                                     @endif
