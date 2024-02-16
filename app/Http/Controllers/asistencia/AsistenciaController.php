@@ -97,7 +97,7 @@ class AsistenciaController extends Controller
                 } else $message = 'noDisponible';
 
                 $pagos=DB::Connection('pgsql')->Table('pagos')->Where('id_curso',$curso->id)->Value('status_recepcion');
-                if(isset($pagos) && in_array($pagos, ['VALIDADO', 'En Espera'])) {
+                if(!is_null($pagos) && in_array($pagos, ['VALIDADO', 'En Espera'])) {
                     $procesoPago = TRUE;
                 }
 
