@@ -59,7 +59,7 @@ class CalificacionesController extends Controller {
                 else $_SESSION['id_curso'] = $curso->id;
 
                 $pagos=DB::Connection('pgsql')->Table('pagos')->Where('id_curso',$curso->id)->Value('status_recepcion');
-                if($pagos != NULL && in_array($pagos, ['VALIDADO', 'En Espera'])) {
+                if($curso->tipo_curso == 'CERTIFICACION' && $pagos != NULL && in_array($pagos, ['VALIDADO', 'En Espera'])) {
                     $procesoPago = TRUE;
                 }
             } else {
