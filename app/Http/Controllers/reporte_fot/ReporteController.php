@@ -190,7 +190,7 @@ class ReporteController extends Controller
         $arrayUrlFotos = [];
         try {
             for ($i=0; $i < count($imagenes); $i++) {
-                $url_foto = $this->img_upload($imagenes[$i], $id_curso, 'foto'.$i+1, $anio);
+                $url_foto = $this->img_upload($imagenes[$i], $id_curso, 'foto'.($i+1), $anio);
                 array_push($arrayUrlFotos, $url_foto[1]);
             }
         } catch (\Throwable $th) {
