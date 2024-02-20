@@ -106,7 +106,7 @@
                                                         {{ 'NINGUNO' }} @endif
                                                 </td>
                                                 <td>
-                                                    @if ((!$a->folio or $a->folio == '0') && $a->porcentaje_asis >= 70)
+                                                    @if ((!$a->folio or $a->folio == '0') && ($a->porcentaje_asis >= 70 || !is_null($a->porcentaje_asis)))
                                                         <?php $cambios = true; ?>
                                                         {{ Form::text('calificacion[' . $a->id . ']', $a->calificacion, ['id' => $a->id, 'class' => 'form-control numero', 'required' => 'required', 'size' => 1]) }}
                                                     @else
