@@ -55,9 +55,9 @@ class ReporteController extends Controller
         ->where('nombre_archivo', '=', 'Reporte fotografico ' . $clave . '.pdf')->pluck('status');
         if(isset($tbl_firmas[0])){
             if($tbl_firmas[0] == 'VALIDADO'){
-                $status_firma =  'El reporte de evidencias de este curso ya se encuentra firmado electrónicamente.';
+                $status_firma = "VALIDADO";
             }else if($tbl_firmas[0] == 'EnFirma'){
-                $status_firma =  'Pendiente por firmar';
+                $status_firma = "PENDIENTE";
             }
         }
 

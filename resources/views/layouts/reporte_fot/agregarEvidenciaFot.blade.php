@@ -108,7 +108,13 @@
         @endif
         @if ($status_firma != '')
             <div class="alert alert-info">
-                <p>{{$status_firma}}</p>
+                <p>
+                    @if ($status_firma == "VALIDADO")
+                        El reporte de evidencias de este curso ya se encuentra firmado electrónicamente.
+                    @elseif ($status_firma == "PENDIENTE")
+                        Pendiente por firmar
+                    @endif
+                </p>
             </div>
         @endif
 
@@ -200,9 +206,13 @@
                                     <button id="btnOrdenar" type="button" class="btn btn-info mt-1" onclick="orderarImg({{ json_encode($array_fotos) }}, {{$curso->id}})">ORDENAR IMG</button>
                                 @endif
                                 <button id="btnGenerar" type="button" class="btn btn-info mt-1" onclick="">GENERAR PDF</button>
-                                @if ($status_documento == "" || $status_documento == 'RETORNADO')
-                                <button id="btnSaveImg" type="button" class="btn btn-info mt-1" onclick="enviarImgServ({{$curso->id}})">GUARDAR FOTOS</button>
-                                <button id="btnEnviar" type="button" class="btn btn-danger mt-1" onclick="">ENVIAR DATOS</button>
+                                @if ($status_documento == "" || $status_documento == 'RETORNADO' && $status_firma != "VALIDADO")
+                                    <button id="btnSaveImg" type="button" class="btn btn-info mt-1" onclick="enviarImgServ({{$curso->id}})">GUARDAR FOTOS</button>
+                                    <button id="btnEnviar" type="button" class="btn btn-danger mt-1" onclick="">ENVIAR DATOS</button>
+                                @endif
+                                {{-- en caso de que se haya cancelado el sello solo por imagenes, asi podran subir de nuevo --}}
+                                @if ($status_firma == "VALIDADO" && $status_documento == "RETORNADO_IMG")
+                                    <button id="btnSaveImg" type="button" class="btn btn-info mt-1" onclick="enviarImgServ({{$curso->id}})">GUARDAR FOTOS</button>
                                 @endif
                             </div>
 
