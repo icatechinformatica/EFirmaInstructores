@@ -46,7 +46,7 @@ class CalificacionesController extends Controller {
                 $fecha_valida =  strtotime($fecha_hoy) - strtotime($fecha_penultimo);
 
                 if ($curso->status_curso == "AUTORIZADO") {
-                    $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select('i.id', 'i.matricula', 'i.alumno', 'i.calificacion', 'f.folio')
+                    $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select('i.id', 'i.matricula', 'i.alumno', 'i.calificacion','i.porcentaje_asis', 'f.folio')
                         ->leftJoin('tbl_folios as f', function ($join) {
                             $join->on('f.id', '=', 'i.id_folio');
                         })
@@ -75,7 +75,7 @@ class CalificacionesController extends Controller {
         $clave = $request->clave;
         if($request->calificacion ){
             foreach($request->calificacion as $key=>$val){
-                if(!is_numeric($val) OR $val<6 )  $val = "NP";
+                if(!is_numeric($val) OR $val<70 )  $val = "NP";
                 $result = DB::connection('pgsql')
                     ->table('tbl_inscripcion')
                     ->where('id_curso',$id_curso)

@@ -112,9 +112,11 @@ class AsistenciaController extends Controller
         $fechas = $request->fechas;
         $alumnos = $request->alumnos;
         $asistencias = $request->asistencias;
+        $totalFechas = count($fechas);
 
         if ($asistencias != null) {
             foreach ($alumnos as $alumno) {
+                $countAsistencia = 0;
                 $asisAlumno = [];
                 foreach ($fechas as $fecha) {
                     $bandera = false;
@@ -126,6 +128,7 @@ class AsistenciaController extends Controller
                             'fecha' => $fecha,
                             'asistencia' => true
                         ];
+                        $countAsistencia++;
                     } else {
                         $temp = [
                             'fecha' => $fecha,
@@ -134,14 +137,41 @@ class AsistenciaController extends Controller
                     }
                     array_push($asisAlumno, $temp);
                 }
+
                 // se actualiza el alumno en la bd
-                tbl_inscripcion::where('id', '=', $alumno)->update(['asistencias' => $asisAlumno]);
-                $message = 'Las asistencias se guardaron exitosamente';
+                $porcentajeAsistencias = ($countAsistencia / $totalFechas) * 100;
+                $alumnoCheck = tbl_inscripcion::Where('id', $alumno)->First();
+                $calif_finalizado = tbl_cursos::Where('id', $alumnoCheck->id_curso)->Value('calif_finalizado');
+
+                if($porcentajeAsistencias < 70) {
+                    if($alumnoCheck->calificacion != 'NP')
+                    {
+                        $message = 'El alumno '.$alumnoCheck->alumno.' tiene una calificación aprobatoria pero un porcentaje de asistencia reprobatorio. Por favor, revise nuevamente.';
+                        return redirect()->route('asistencia.inicio')->with('Warning', $message);
+                    }
+
+                    if($calif_finalizado == FALSE || $alumnoCheck->calificacion == 'NP') {
+                        tbl_inscripcion::where('id', $alumno)
+                            ->update(['calificacion' => 'NP',
+                                    'iduser_updated'=>Auth::user()->id,
+                                    'asistencias' => $asisAlumno,
+                                    'porcentaje_asis' => $porcentajeAsistencias]);
+                    } else {
+                        $message = 'No se le puede asignar un porcentaje reprobatorio al alumno '.$alumnoCheck->alumno.'. Se envio a unidad con calificación aprobatoria. Por favor, revise nuevamente.';
+                        return redirect()->route('asistencia.inicio')->with('Warning', $message);
+                    }
+                }
+                else {
+                    tbl_inscripcion::where('id', '=', $alumno)
+                    ->update(['asistencias' => $asisAlumno,
+                              'porcentaje_asis' => $porcentajeAsistencias]);
+                }
+                $message = 'ASISTENCIAS GUARDADAS EXITOSAMENTE!';
             }
         } else $message = 'Debe marcar los checks en la fecha que los alumnos asistieron a la capacitación';
 
         // return redirect('/Asistencia/inicio')->with(['message'=>$message]);
-        return redirect()->route('asistencia.inicio')->with('success', 'ASISTENCIAS GUARDADAS EXITOSAMENTE!');
+        return redirect()->route('asistencia.inicio')->with('success', $message);
     }
 
     public function asistenciaPdf(Request $request) {
