@@ -91,6 +91,7 @@
                                             <th scope="col">ALUMNOS</th>
                                             <th scope="col" class="text-center" width="10%">FOLIO ASIGNADO</th>
                                             <th scope="col" class="text-center" width="10%">CALIFICACI&Oacute;N</th>
+                                            <th scope="col" class="text-center" width="18%">OBSERVACION</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -105,11 +106,16 @@
                                                         {{ 'NINGUNO' }} @endif
                                                 </td>
                                                 <td>
-                                                    @if (!$a->folio or $a->folio == '0')
+                                                    @if ((!$a->folio or $a->folio == '0') && $a->porcentaje_asis >= 70)
                                                         <?php $cambios = true; ?>
                                                         {{ Form::text('calificacion[' . $a->id . ']', $a->calificacion, ['id' => $a->id, 'class' => 'form-control numero', 'required' => 'required', 'size' => 1]) }}
                                                     @else
                                                         {{ $a->calificacion }}
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($a->porcentaje_asis < 70)
+                                                        La Asistencia es menor al 70%
                                                     @endif
                                                 </td>
                                             </tr>
@@ -118,7 +124,7 @@
                                     <tfoot>
                                         <tr>
                                             @if (count($alumnos) > 0 and $fecha_valida >= 0)
-                                                <td colspan="5" class="text-right">
+                                                <td colspan="6" class="text-right">
                                                     <input class="d-none" type="text" id="calif_finalizado" value="{{$curso->calif_finalizado}}">
                                                     {{ Form::button('GENERAR LISTA DE CALIFICACIONES', ['id' => 'reporte', 'class' => 'btn btn-outline-info']) }}
                                                     @if (!$curso->calif_finalizado && !$procesoPago)

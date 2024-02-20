@@ -38,6 +38,11 @@
                 <p>{{ $messages }}</p>
             </div>
         @endif
+        @if ($messages = Session::get('Warning'))
+            <div class="alert alert-danger">
+                <p>{{ $messages }}</p>
+            </div>
+        @endif
         @if (isset($curso) && $curso->observacion_asistencia_rechazo != null && $curso->asis_finalizado == FALSE)
             <div class="alert alert-danger">
                 <p>{{ $curso->observacion_asistencia_rechazo }}</p>
