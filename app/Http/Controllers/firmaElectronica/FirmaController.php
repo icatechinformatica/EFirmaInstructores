@@ -222,18 +222,6 @@ class FirmaController extends Controller {
 
     public function generarPDF(Request $request) {
         $documento = DocumentosFirmar::where('id', $request->txtIdGenerar)->first();
-        // $objeto = json_decode($documento->obj_documento_interno,true);
-        // $no_oficio = json_decode(json_encode(simplexml_load_string($documento['documento_interno'], "SimpleXMLElement", LIBXML_NOCDATA),true));
-        // dd($no_oficio);
-        // $no_oficio = $no_oficio->{'@attributes'}->no_oficio;
-        // $uuid = $documento->uuid_sellado;
-        // $cadena_sello = $documento->cadena_sello;
-        // $fecha_sello = $documento->fecha_sellado;
-        // $folio = $documento->nombre_archivo;
-        // $tipo_archivo = $documento->tipo_archivo;
-        // $totalFirmantes = $objeto['firmantes']['_attributes']['num_firmantes'];
-
-        // if ($documento->tipo_archivo == 'Contrato') {
             $contrato = new contratos();
             $data_contrato = contratos::SELECT('contratos.*')
                             ->JOIN('folios', 'folios.id_folios', 'contratos.id_folios')
@@ -296,163 +284,12 @@ class FirmaController extends Controller {
             }
             return $pdf->stream("Contrato-Instructor-$data_contrato->numero_contrato.pdf");
 
-        // } else {
-        //     $url = $documento->link_pdf;
-        //     $unity = explode('/', $url);
-        //     $path = storage_path('app/public/uploadFiles/DocumentosFirmas/'.$unity[6].'/'.$documento->nombre_archivo);
-        //     $result = str_replace('\\','/', $path);
-        //     $pageCount =  $pdf->setSourceFile($result);
-        // }
-
-        // for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-        //     $tplId = $pdf->importPage($pageNo);
-        //     if ($tipo_archivo == 'Contrato') {
-        //         $pdf->addPage('P','A4'); //
-        //     } else {
-        //         $pdf->addPage('L','Letter'); //
-        //     }
-        //     $pdf->useTemplate($tplId);
-        // }
-
-        // if ($tipo_archivo == 'Contrato') {
-        //     $pdf->addPage('P','A4');
-        // } else {
-        //     $pdf->addPage('L','Letter');
-        // }
-
-        // The new content
-        // $fontSize = '15';
-        // $fontColor = `255,0,0`;
-        // $left = 16;
-        // $top = 20;
-        // $text = 'Documento';
-
-        // $pdf->SetFont("helvetica", "B", 10);
-        // // $pdf->SetTextColor($fontColor);
-        // $pdf->Text($left,$top,$text);
-        // $pdf->Text(16, 60, 'Firmas e informacion identificadora');
-
-        // $pdf->SetFont("helvetica", '', 7);
-        // // documento
-        // $pdf->SetTextColor(98,98,98);
-        // $pdf->Text(20, 25, 'Nombre del documento:');
-        // $pdf->Text(20, 30, 'Fecha de constancia:');
-        // $pdf->Text(20, 35, 'Documento creado por:');
-        // $pdf->Text(20, 40, 'Numero de paginas:');
-        // $pdf->Text(20, 45, 'Numero de firmantes:');
-
-        // $pdf->SetTextColor($fontColor);
-        // $pdf->Text(80, 25, $objeto['archivo']['_attributes']['nombre_archivo']);
-        // $pdf->Text(80, 30, $documento->fecha_sellado);
-        // $pdf->Text(80, 35, $objeto['emisor']['_attributes']['nombre_emisor']);
-        // $pdf->Text(80, 40, $pageCount);
-        // $pdf->Text(80, 45, $totalFirmantes);
-
-        // firmas
-        // $pdf->Text(77, 60, '(Las firmas son unicas para este documento)');
-
-        // $x = 20; $y = 65;
-        /* foreach ($array as $value) {
-            $pdf->SetTextColor(98,98,98);
-            $pdf->Text($x, $y, 'Nombre del Firmante:');
-            if ($tipo_archivo == 'Contrato') {
-                $pdf->Text($x + 100, $y, 'Numero de Certificado:');
-                $pdf->Text($x, $y + 5, 'Emisor:');
-                $pdf->Text($x, $y + 10, 'Firma Electronica:');
-                $pdf->Text($x, $y + 27, 'Fecha y hora de Firma:');
-                $pdf->Text($x + 80, $y + 27, 'Puesto: ');
-            } else {
-                $pdf->Text($x, $y + 5, 'Numero de Certificado:');
-                $pdf->Text($x, $y + 10, 'Emisor:');
-                $pdf->Text($x, $y + 15, 'Firma Electronica:');
-                $pdf->Text($x, $y + 27, 'Fecha y hora de Firma:');
-                $pdf->Text($x, $y + 32, 'Puesto: ');
-            }
-
-            $pdf->SetTextColor($fontColor);
-            $pdf->Text($x + 40, $y, $value['nombre_firmante']);
-            if ($tipo_archivo == 'Contrato') {
-                $pdf->Text($x + 130, $y, $value['no_serie_firmante']);
-                $pdf->Text($x + 40, $y + 5, 'SERVICIO DE ADMINISTRACION TRIBUTARIA');
-                $pdf->setXY($x + 39, $y + 7);
-                $pdf->MultiCell(0, 4, $value['firma_firmante'], 0, 'J', false);
-                $pdf->Text($x + 40, $y + 27, $value['fecha_firmado_firmante']);
-                $pdf->Text($x + 100, $y + 27, $value['puesto_firmante']);
-
-                $y += 40;
-            } else {
-                $pdf->Text($x + 40, $y + 5, $value['no_serie_firmante']);
-                $pdf->Text($x + 40, $y + 10, 'SERVICIO DE ADMINISTRACION TRIBUTARIA');
-                $pdf->setXY($x + 39, $y + 12);
-                $pdf->MultiCell(0, 4, $value['firma_firmante'], 0, 'J', false);
-                $pdf->Text($x + 40, $y + 27, $value['fecha_firmado_firmante']);
-                $pdf->Text($x + 40, $y + 32, $value['puesto_firmante']);
-
-                $y += 55;
-            }
-        } */
-
-        // foreach ($objeto['firmantes']['firmante'][0] as $value) {
-        //     $pdf->SetTextColor(98,98,98);
-        //     $pdf->Text($x, $y, 'Nombre del Firmante:');
-        //     if ($tipo_archivo == 'Contrato') {
-        //         $pdf->Text($x + 100, $y, 'Numero de Certificado:');
-        //         $pdf->Text($x, $y + 5, 'Emisor:');
-        //         $pdf->Text($x, $y + 10, 'Firma Electronica:');
-        //         $pdf->Text($x, $y + 27, 'Fecha y hora de Firma:');
-        //         $pdf->Text($x + 80, $y + 27, 'Puesto:');
-        //     } else {
-        //         $pdf->Text($x, $y + 5, 'Numero de Certificado:');
-        //         $pdf->Text($x, $y + 10, 'Emisor:');
-        //         $pdf->Text($x, $y + 15, 'Firma Electronica:');
-        //         $pdf->Text($x, $y + 27, 'Fecha y hora de Firma:');
-        //         $pdf->Text($x, $y + 32, 'Puesto:');
-        //     }
-
-        //     $pdf->SetTextColor($fontColor);
-        //     $pdf->Text($x + 40, $y, $value['_attributes']['nombre_firmante']);
-        //     if ($tipo_archivo == 'Contrato') {
-        //         $pdf->Text($x + 130, $y, $value['_attributes']['no_serie_firmante']);
-        //         $pdf->Text($x + 40, $y + 5, 'SERVICIO DE ADMINISTRACION TRIBUTARIA');
-        //         $pdf->setXY($x + 39, $y + 7);
-        //         $pdf->MultiCell(0, 4, $value['_attributes']['firma_firmante'], 0, 'J', false);
-        //         $pdf->Text($x + 40, $y + 27, $value['_attributes']['fecha_firmado_firmante']);
-        //         $pdf->Text($x + 100, $y + 27, $value['_attributes']['puesto_firmante']);
-        //     } else {
-        //         $pdf->Text($x + 40, $y + 5, $value['_attributes']['no_serie_firmante']);
-        //         $pdf->Text($x + 40, $y + 10, 'SERVICIO DE ADMINISTRACION TRIBUTARIA');
-        //         $pdf->setXY($x + 39, $y + 12);
-        //         $pdf->MultiCell(0, 4, $value['_attributes']['firma_firmante'], 0, 'J', false);
-        //         $pdf->Text($x + 40, $y + 27, $value['_attributes']['fecha_firmado_firmante']);
-        //         $pdf->Text($x + 40, $y + 32, $value['_attributes']['puesto_firmante']);
-        //     }
-        // }
-
         $verificacion = "https://innovacion.chiapas.gob.mx/validacionDocumentoPrueba/consulta/Certificado3?guid=$uuid&no_folio=$folio";
 
         $parts = explode('.', $folio);
         $locat = storage_path("app/public/qrcode/$parts[0].png");
         $location = str_replace('\\','/', $locat);
         \PHPQRCode\QRcode::png($verificacion, $location, 'L', 10, 0);
-
-        // if ($tipo_archivo == 'Contrato') {
-        //     $pdf->Image($location, 16, 270, 20, 20, "png");
-        //     $pdf->Text(45, 275, 'Para verificar la integridad de este documento, favor de escanear el codigo QR o visitar el enlace:');
-        //     $pdf->Text(45, 280, 'https://innovacion.chiapas.gob.mx/validaciondocumentoprueba');
-        //     $pdf->Text(45, 285, 'Guid: ');
-        //     $pdf->Text(55, 285, $uuid);
-        //     $pdf->Text(45, 289, 'Folio: ');
-        //     $pdf->Text(55, 289, $folio);
-        // } else {
-        //     $pdf->Image($location, 16, 185, 20, 20, "png");
-        //     $pdf->Text(45, 190, 'Para verificar la integridad de este documento, favor de escanear el codigo QR o visitar el enlace:');
-        //     $pdf->Text(45, 195, 'https://innovacion.chiapas.gob.mx/validaciondocumentoprueba');
-        //     $pdf->Text(45, 200, 'Guid: ');
-        //     $pdf->Text(55, 200, $uuid);
-        //     $pdf->Text(45, 204, 'Folio: ');
-        //     $pdf->Text(55, 204, $folio);
-        // }
-        // $pdf->Output('I', 'FIRMADO_'.$objeto['archivo']['_attributes']['nombre_archivo']);
     }
 
     public function cancelarDocumento(Request $request) {
