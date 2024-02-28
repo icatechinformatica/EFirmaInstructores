@@ -34,7 +34,8 @@ class ReporteController extends Controller
 
 
     public function index(Request $request){
-        $path_files = $this->path_files;
+        // $path_files = $this->path_files;
+        $path_files = 'https://www.sivyc.icatech.gob.mx/storage/uploadFiles';
         $message = null;
         $curso = null;
         $unidad = null;
@@ -253,7 +254,8 @@ class ReporteController extends Controller
     #Generar reporte pdf
     public function repofotoPdf(Request $request){
         $clave = $request->clave_curso;
-        $path_files = $this->path_files;
+        // $path_files = $this->path_files;
+        $path_files = 'https://www.sivyc.icatech.gob.mx/storage/uploadFiles';
         $array_fotos = [];
         $fecha_gen = '';
 
@@ -312,12 +314,24 @@ class ReporteController extends Controller
             $array_fotos = $cursopdf->evidencia_fotografica['url_fotos'];
         }
 
+        ##Procesar imagenes
         $base64Images = [];
-        foreach ($array_fotos as $url) {
-            // $imageContent = file_get_contents('/storage/uploadFiles'.$url);
-            $imageContent = file_get_contents(storage_path("app/public/uploadFiles".$url));
-            $base64 = base64_encode($imageContent);
-            $base64Images[] = $base64;
+        $environment = config('app.env');
+
+        if ($environment === 'local') {
+            ##Local
+            foreach ($array_fotos as $url) {
+                $imageContent = file_get_contents("https://www.sivyc.icatech.gob.mx/storage/uploadFiles{$url}");
+                $base64 = base64_encode($imageContent);
+                $base64Images[] = $base64;
+            }
+        } else {
+            ##Produccion
+            foreach ($array_fotos as $url) {
+                $imageContent = file_get_contents(storage_path("app/public/uploadFiles".$url));
+                $base64 = base64_encode($imageContent);
+                $base64Images[] = $base64;
+            }
         }
 
         $pdf = PDF::loadView('layouts.reporte_fot.pdfEvidenciaFot', compact('cursopdf', 'leyenda', 'fecha_gen', 'base64Images', 'path_files'));
