@@ -62,6 +62,18 @@ class ReporteController extends Controller
             }
         }
 
+        ##Validar fechas de termino de curso
+        //2024-04-22
+        $firma_activa = '';
+        if ($curso) {
+            $fecha_actual = Carbon::now();
+            $termino_curso = Carbon::createFromFormat('Y-m-d', $curso->termino);
+
+            if ($fecha_actual->gte($termino_curso)) {$firma_activa = 'ACTIVO';}
+            else {$firma_activa = 'INACTIVO';}
+        }
+
+
         //Reporte fotografico 2B-23-ADMI-CAE-0200.pdf
         #Validamos si existen
         if (isset($curso->evidencia_fotografica['observacion_reporte'])){
@@ -84,17 +96,14 @@ class ReporteController extends Controller
             if ($curso->curp == Auth::user()->curp) {
 
                 if ($curso->status_curso == "AUTORIZADO") {
-
-                    ##Verificamos si el archivo no ha sido firmado electronicamente
                     $message = 'ok';
-
                 } else $message = 'noDisponible';
 
             } else $message = 'denegado';
         }
 
         return view('layouts.reporte_fot.agregarEvidenciaFot', compact('curso', 'message', 'clave', 'unidad', 'mensaje_retorno',
-                                                            'status_documento', 'array_fotos', 'path_files', 'status_firma'));
+                                                            'status_documento', 'array_fotos', 'path_files', 'status_firma','firma_activa'));
     }
 
     protected function img_upload($img, $id, $nom, $anio)
@@ -365,11 +374,13 @@ class ReporteController extends Controller
         ->Select('fun.id as id_fun','org.id', 'fun.nombre AS funcionario','fun.curp', 'us.name',
         'fun.cargo','fun.correo', 'us.puesto', 'fun.incapacidad')
             ->join('tbl_funcionarios AS fun', 'fun.id_org','org.id')
+            ->join('tbl_cursos as tc', 'tc.id_unidad','org.id_unidad')
             ->join('users as us', 'us.email','fun.correo')
             ->where('org.nombre', 'LIKE', '%ACADEMICO%')
-            ->where('org.nombre', 'LIKE', '%'.$info->ubicacion.'%')
+            ->where('tc.id_unidad', '=', $info->id_unidad)
             ->where('fun.activo', '=', 'true')
             ->first();
+
         if($dataFirmante == null){
             return "NO SE ENCONTRON DATOS DEL ACADEMICO!";
         }
