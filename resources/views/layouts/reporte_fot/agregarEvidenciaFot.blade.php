@@ -106,6 +106,11 @@
                 <p>{{ $mensaje_retorno }}</p>
             </div>
         @endif
+        @if ($firma_activa == 'INACTIVO')
+            <div class="alert alert-warning">
+                <p>El curso aún no ha finalizado, por lo tanto solo podrá subir fotos, pero no enviar datos a la unidad para el firmado</p>
+            </div>
+        @endif
         @if ($status_firma != '')
             <div class="alert alert-info">
                 <p>
@@ -208,7 +213,10 @@
                                 <button id="btnGenerar" type="button" class="btn btn-info mt-1" onclick="">GENERAR PDF</button>
                                 @if ($status_documento == "" || $status_documento == 'RETORNADO' && $status_firma != "VALIDADO")
                                     <button id="btnSaveImg" type="button" class="btn btn-info mt-1" onclick="enviarImgServ({{$curso->id}})">GUARDAR FOTOS</button>
-                                    <button id="btnEnviar" type="button" class="btn btn-danger mt-1" onclick="">ENVIAR DATOS</button>
+
+                                    @if ($firma_activa == "ACTIVO")
+                                        <button id="btnEnviar" type="button" class="btn btn-danger mt-1" onclick="">ENVIAR DATOS</button>
+                                    @endif
                                 @endif
                                 {{-- en caso de que se haya cancelado el sello solo por imagenes, asi podran subir de nuevo --}}
                                 @if ($status_firma == "VALIDADO" && $status_documento == "RETORNADO_IMG")
