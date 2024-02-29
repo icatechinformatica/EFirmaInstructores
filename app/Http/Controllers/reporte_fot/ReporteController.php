@@ -352,7 +352,7 @@ class ReporteController extends Controller
 
     #Generar xml
     public function generar_xml($id_curso, $fotosbd, $md5bd) {
-        $info = DB::connection('pgsql')->Table('tbl_cursos')->Select('tbl_unidades.*','tbl_cursos.clave','tbl_cursos.nombre','tbl_cursos.curp','instructores.correo')
+        $info = DB::connection('pgsql')->Table('tbl_cursos')->Select('tbl_unidades.*','tbl_cursos.clave','tbl_cursos.nombre','tbl_cursos.curp','instructores.correo', 'tbl_cursos.id_unidad')
                 ->Join('tbl_unidades','tbl_unidades.unidad','tbl_cursos.unidad')
                 ->join('instructores','instructores.id','tbl_cursos.id_instructor')
                 ->Where('tbl_cursos.id', $id_curso)
