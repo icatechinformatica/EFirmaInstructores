@@ -116,7 +116,7 @@
                 <p>
                     @if ($status_firma == "VALIDADO")
                         El reporte de evidencias de este curso ya se encuentra firmado electrónicamente.
-                    @elseif ($status_firma == "PENDIENTE")
+                    @elseif ($status_firma == "EnFirma")
                         Pendiente por firmar
                     @endif
                 </p>
@@ -211,7 +211,7 @@
                                     <button id="btnOrdenar" type="button" class="btn btn-info mt-1" onclick="orderarImg({{ json_encode($array_fotos) }}, {{$curso->id}})">ORDENAR IMG</button>
                                 @endif
                                 <button id="btnGenerar" type="button" class="btn btn-info mt-1" onclick="">GENERAR PDF</button>
-                                @if ($status_documento == "" || $status_documento == 'RETORNADO' && $status_firma != "VALIDADO")
+                                @if ($status_documento == "" || $status_documento == 'RETORNADO' && $status_firma != "VALIDADO" && $status_firma != "CANCELADO ICTI")
                                     <button id="btnSaveImg" type="button" class="btn btn-info mt-1" onclick="enviarImgServ({{$curso->id}})">GUARDAR FOTOS</button>
 
                                     @if ($firma_activa == "ACTIVO")
