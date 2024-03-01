@@ -55,11 +55,8 @@ class ReporteController extends Controller
         $tbl_firmas = DocumentosFirmar::where('numero_o_clave', $clave)
         ->where('nombre_archivo', '=', 'Reporte fotografico ' . $clave . '.pdf')->pluck('status');
         if(isset($tbl_firmas[0])){
-            if($tbl_firmas[0] == 'VALIDADO'){
-                $status_firma = "VALIDADO";
-            }else if($tbl_firmas[0] == 'EnFirma'){
-                $status_firma = "PENDIENTE";
-            }
+            //EnFirma CANCELADO CANCELADO ICTI VALIDADO
+            $status_firma = $tbl_firmas[0];
         }
 
         ##Validar fechas de termino de curso
