@@ -143,7 +143,7 @@ class AsistenciaController extends Controller
                 $alumnoCheck = tbl_inscripcion::Where('id', $alumno)->First();
                 $calif_finalizado = tbl_cursos::Where('id', $alumnoCheck->id_curso)->Value('calif_finalizado');
 
-                if($porcentajeAsistencias < 70) {
+                if($porcentajeAsistencias < 80) {
                     if($alumnoCheck->calificacion != 'NP' && $alumnoCheck->calificacion != '0')
                     {
                         $message = 'El alumno '.$alumnoCheck->alumno.' tiene una calificación aprobatoria pero un porcentaje de asistencia reprobatorio. Por favor, revise nuevamente.';
