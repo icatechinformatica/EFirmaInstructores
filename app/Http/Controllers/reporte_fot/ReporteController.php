@@ -34,7 +34,8 @@ class ReporteController extends Controller
 
 
     public function index(Request $request){
-        $path_files = $this->path_files;
+        // $path_files = $this->path_files;
+        $path_files = 'https://www.sivyc.icatech.gob.mx/storage/uploadFiles';
         $message = null;
         $curso = null;
         $unidad = null;
@@ -54,12 +55,21 @@ class ReporteController extends Controller
         $tbl_firmas = DocumentosFirmar::where('numero_o_clave', $clave)
         ->where('nombre_archivo', '=', 'Reporte fotografico ' . $clave . '.pdf')->pluck('status');
         if(isset($tbl_firmas[0])){
-            if($tbl_firmas[0] == 'VALIDADO'){
-                $status_firma = "VALIDADO";
-            }else if($tbl_firmas[0] == 'EnFirma'){
-                $status_firma = "PENDIENTE";
-            }
+            //EnFirma CANCELADO CANCELADO ICTI VALIDADO
+            $status_firma = $tbl_firmas[0];
         }
+
+        ##Validar fechas de termino de curso
+        //2024-04-22
+        $firma_activa = '';
+        if ($curso) {
+            $fecha_actual = Carbon::now();
+            $termino_curso = Carbon::createFromFormat('Y-m-d', $curso->termino);
+
+            if ($fecha_actual->gte($termino_curso)) {$firma_activa = 'ACTIVO';}
+            else {$firma_activa = 'INACTIVO';}
+        }
+
 
         //Reporte fotografico 2B-23-ADMI-CAE-0200.pdf
         #Validamos si existen
@@ -83,17 +93,14 @@ class ReporteController extends Controller
             if ($curso->curp == Auth::user()->curp) {
 
                 if ($curso->status_curso == "AUTORIZADO") {
-
-                    ##Verificamos si el archivo no ha sido firmado electronicamente
                     $message = 'ok';
-
                 } else $message = 'noDisponible';
 
             } else $message = 'denegado';
         }
 
         return view('layouts.reporte_fot.agregarEvidenciaFot', compact('curso', 'message', 'clave', 'unidad', 'mensaje_retorno',
-                                                            'status_documento', 'array_fotos', 'path_files', 'status_firma'));
+                                                            'status_documento', 'array_fotos', 'path_files', 'status_firma','firma_activa'));
     }
 
     protected function img_upload($img, $id, $nom, $anio)
@@ -253,7 +260,8 @@ class ReporteController extends Controller
     #Generar reporte pdf
     public function repofotoPdf(Request $request){
         $clave = $request->clave_curso;
-        $path_files = $this->path_files;
+        // $path_files = $this->path_files;
+        $path_files = 'https://www.sivyc.icatech.gob.mx/storage/uploadFiles';
         $array_fotos = [];
         $fecha_gen = '';
 
@@ -312,12 +320,24 @@ class ReporteController extends Controller
             $array_fotos = $cursopdf->evidencia_fotografica['url_fotos'];
         }
 
+        ##Procesar imagenes
         $base64Images = [];
-        foreach ($array_fotos as $url) {
-            // $imageContent = file_get_contents('/storage/uploadFiles'.$url);
-            $imageContent = file_get_contents(storage_path("app/public/uploadFiles".$url));
-            $base64 = base64_encode($imageContent);
-            $base64Images[] = $base64;
+        $environment = config('app.env');
+
+        if ($environment === 'local') {
+            ##Local
+            foreach ($array_fotos as $url) {
+                $imageContent = file_get_contents("https://www.sivyc.icatech.gob.mx/storage/uploadFiles{$url}");
+                $base64 = base64_encode($imageContent);
+                $base64Images[] = $base64;
+            }
+        } else {
+            ##Produccion
+            foreach ($array_fotos as $url) {
+                $imageContent = file_get_contents(storage_path("app/public/uploadFiles".$url));
+                $base64 = base64_encode($imageContent);
+                $base64Images[] = $base64;
+            }
         }
 
         $pdf = PDF::loadView('layouts.reporte_fot.pdfEvidenciaFot', compact('cursopdf', 'leyenda', 'fecha_gen', 'base64Images', 'path_files'));
@@ -329,7 +349,7 @@ class ReporteController extends Controller
 
     #Generar xml
     public function generar_xml($id_curso, $fotosbd, $md5bd) {
-        $info = DB::connection('pgsql')->Table('tbl_cursos')->Select('tbl_unidades.*','tbl_cursos.clave','tbl_cursos.nombre','tbl_cursos.curp','instructores.correo')
+        $info = DB::connection('pgsql')->Table('tbl_cursos')->Select('tbl_unidades.*','tbl_cursos.clave','tbl_cursos.nombre','tbl_cursos.curp','instructores.correo', 'tbl_cursos.id_unidad')
                 ->Join('tbl_unidades','tbl_unidades.unidad','tbl_cursos.unidad')
                 ->join('instructores','instructores.id','tbl_cursos.id_instructor')
                 ->Where('tbl_cursos.id', $id_curso)
@@ -351,11 +371,13 @@ class ReporteController extends Controller
         ->Select('fun.id as id_fun','org.id', 'fun.nombre AS funcionario','fun.curp', 'us.name',
         'fun.cargo','fun.correo', 'us.puesto', 'fun.incapacidad')
             ->join('tbl_funcionarios AS fun', 'fun.id_org','org.id')
+            ->join('tbl_cursos as tc', 'tc.id_unidad','org.id_unidad')
             ->join('users as us', 'us.email','fun.correo')
             ->where('org.nombre', 'LIKE', '%ACADEMICO%')
-            ->where('org.nombre', 'LIKE', '%'.$info->ubicacion.'%')
+            ->where('tc.id_unidad', '=', $info->id_unidad)
             ->where('fun.activo', '=', 'true')
             ->first();
+
         if($dataFirmante == null){
             return "NO SE ENCONTRON DATOS DEL ACADEMICO!";
         }
