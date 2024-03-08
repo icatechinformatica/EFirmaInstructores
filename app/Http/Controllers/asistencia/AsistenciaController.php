@@ -144,19 +144,20 @@ class AsistenciaController extends Controller
                 $calif_finalizado = tbl_cursos::Where('id', $alumnoCheck->id_curso)->Value('calif_finalizado');
 
                 if($porcentajeAsistencias < 80) {
+
                     if($alumnoCheck->calificacion != 'NP' && $alumnoCheck->calificacion != '0')
                     {
                         $message = 'El alumno '.$alumnoCheck->alumno.' tiene una calificación aprobatoria pero un porcentaje de asistencia reprobatorio. Por favor, revise nuevamente.';
                         return redirect()->route('asistencia.inicio')->with('Warning', $message);
                     }
 
-                    if($calif_finalizado == FALSE || $alumnoCheck->calificacion == 'NP') {
+                    if($calif_finalizado == FALSE && $alumnoCheck->calificacion != 'NP' && $alumnoCheck->calificacion != '0') {
                         tbl_inscripcion::where('id', $alumno)
                             ->update(['calificacion' => 'NP',
                                     'iduser_updated'=>Auth::user()->id,
                                     'asistencias' => $asisAlumno,
                                     'porcentaje_asis' => $porcentajeAsistencias]);
-                    } else {
+                    } else if($alumnoCheck->calificacion != 'NP' && $alumnoCheck->calificacion != '0') {
                         $message = 'No se le puede asignar un porcentaje reprobatorio al alumno '.$alumnoCheck->alumno.'. Se envio a unidad con calificación aprobatoria. Por favor, revise nuevamente.';
                         return redirect()->route('asistencia.inicio')->with('Warning', $message);
                     }
