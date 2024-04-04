@@ -106,7 +106,7 @@
                                                         {{ 'NINGUNO' }} @endif
                                                 </td>
                                                 <td>
-                                                    @if ((!$a->folio or $a->folio == '0') && ($a->porcentaje_asis >= 70 || is_null($a->porcentaje_asis)))
+                                                    @if (!$a->folio or $a->folio == '0' && !$curso->calif_finalizado)
                                                         <?php $cambios = true; ?>
                                                         {{ Form::text('calificacion[' . $a->id . ']', $a->calificacion, ['id' => $a->id, 'class' => 'form-control numero', 'required' => 'required', 'size' => 1]) }}
                                                     @else
@@ -114,8 +114,8 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @if($a->porcentaje_asis < 70 && !is_null($a->porcentaje_asis))
-                                                        La Asistencia es menor al 70%
+                                                    @if($a->porcentaje_asis < 80 && !is_null($a->porcentaje_asis))
+                                                        La Asistencia es menor al 80%
                                                     @endif
                                                 </td>
                                             </tr>
