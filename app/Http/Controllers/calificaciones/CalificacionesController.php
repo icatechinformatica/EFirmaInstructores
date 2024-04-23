@@ -348,7 +348,7 @@ class CalificacionesController extends Controller {
                     $status_campos = true;
                 }
             }else{
-                return redirect()->route('firma.inicio')->with('Danger', 'LA ESTRUCTURA DEL JSON DE LA INCAPACIDAD NO ES VALIDA!');
+                // return redirect()->route('firma.inicio')->with('Danger', 'LA ESTRUCTURA DEL JSON DE LA INCAPACIDAD NO ES VALIDA!');
             }
 
             ##Validar si esta vacio
