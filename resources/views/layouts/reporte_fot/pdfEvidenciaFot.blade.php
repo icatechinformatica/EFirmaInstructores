@@ -109,7 +109,7 @@
     </footer>
     <div style="margin-top: -13%; margin-bottom:-13px;">
         <h6 style="text-align: center;">{{isset($leyenda) ? $leyenda : ''}}</h6>
-        <span style="text-align: center; width:auto; display:block;">REPORTE FOTOGRÁFICO DEL INSTRUCTOR EXTERNO</span>
+        <span style="text-align: center; width:auto; display:block;">REPORTE FOTOGRÁFICO DE INSTRUCTOR EXTERNO</span>
     </div>
     {{-- <div style="text-align: center;">
         <span style="text-align: center;">REPORTE FOTOGRÁFICO DEL INSTRUCTOR</span>

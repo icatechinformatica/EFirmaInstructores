@@ -628,7 +628,7 @@ class ReporteController extends Controller
         $valid_accionmovil = ($curso->unidad != $curso->ubicacion) ? ', CENTRO DE TRABAJO ACCIÓN MÓVIL '.$curso->unidad : ' ';
 
         $body = $leyenda."\n".
-        "\n REPORTE FOTOGRÁFICO DEL INSTRUCTOR EXTERNO\n".
+        "\n REPORTE FOTOGRÁFICO DE INSTRUCTOR EXTERNO\n".
         "\n UNIDAD DE CAPACITACIÓN ".$curso->ubicacion. $valid_accionmovil.
         "\n ".mb_strtoupper($curso->municipio, 'UTF-8').", CHIAPAS. A ".$fecha_gen.".\n";
 
