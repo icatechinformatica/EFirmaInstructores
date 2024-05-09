@@ -109,7 +109,7 @@
     </footer>
     <div style="margin-top: -13%; margin-bottom:-13px;">
         <h6 style="text-align: center;">{{isset($leyenda) ? $leyenda : ''}}</h6>
-        <span style="text-align: center; width:auto; display:block;">REPORTE FOTOGRÁFICO DEL INSTRUCTOR</span>
+        <span style="text-align: center; width:auto; display:block;">REPORTE FOTOGRÁFICO DE INSTRUCTOR EXTERNO</span>
     </div>
     {{-- <div style="text-align: center;">
         <span style="text-align: center;">REPORTE FOTOGRÁFICO DEL INSTRUCTOR</span>
@@ -118,7 +118,7 @@
     <div style="text-align: right;">
         <p style="font-size: 14px; margin-bottom: 3px;">
         @if ($cursopdf->ubicacion != $cursopdf->unidad)
-        UNIDAD DE CAPACITACIÓN {{$cursopdf->ubicacion}}, ACCIÓN MOVIL {{$cursopdf->unidad}}.
+        UNIDAD DE CAPACITACIÓN {{$cursopdf->ubicacion}}, CENTRO DE TRABAJO ACCIÓN MÓVIL {{$cursopdf->unidad}}.
         @else
         UNIDAD DE CAPACITACIÓN {{$cursopdf->ubicacion}}.
         @endif

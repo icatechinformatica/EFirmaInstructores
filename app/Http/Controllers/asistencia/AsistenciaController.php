@@ -262,7 +262,7 @@ class AsistenciaController extends Controller
             ]
             ];
             array_push($arrayFirmantes, $temp);
-
+            
             $temp = ['_attributes' =>
                 [
                     'curp_firmante' => $dataFirmante->curp,
@@ -500,7 +500,8 @@ class AsistenciaController extends Controller
                     $status_campos = true;
                 }
             }else{
-                return redirect()->route('firma.inicio')->with('danger', 'LA ESTRUCTURA DEL JSON DE LA INCAPACIDAD NO ES VALIDA!');
+                // dd('[...]');
+                // return redirect()->route('firma.inicio')->with('danger', 'LA ESTRUCTURA DEL JSON DE LA INCAPACIDAD NO ES VALIDA!');
             }
 
             ##Validar si esta vacio
@@ -524,6 +525,7 @@ class AsistenciaController extends Controller
                     else{return redirect()->route('firma.inicio')->with('danger', 'NO SE ENCONTRON DATOS DE LA PERSONA QUE TOMARÁ EL LUGAR DEL ACADEMICO!');}
 
                 }else{
+                    // dd($dataArray);
                     ##Historial
                     $fecha_busqueda = 'Ini:'. $fecha_ini .'/Fin:'. $fecha_fin .'/IdFun:'. $id_firmante;
                     $clave_ar = array_search($fecha_busqueda, $historial);
