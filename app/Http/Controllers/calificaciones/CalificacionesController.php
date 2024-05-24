@@ -43,7 +43,7 @@ class CalificacionesController extends Controller {
             if ($curso->id_instructor == Auth::user()->id_sivyc) {
                 if (Auth::user()->unidad == 1) $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 3 days"));
                 else $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 1 days"));
-                $fecha_valida =  strtotime($fecha_hoy) - strtotime($fecha_penultimo);
+                $fecha_valida =  strtotime($fecha_hoy) - strtotime($curso->termino);
 
                 if ($curso->status_curso == "AUTORIZADO") {
                     $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select('i.id', 'i.matricula', 'i.alumno', 'i.calificacion','i.porcentaje_asis', 'f.folio')
