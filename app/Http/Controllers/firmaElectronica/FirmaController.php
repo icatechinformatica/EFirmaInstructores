@@ -228,14 +228,8 @@ class FirmaController extends Controller {
                         ->WHERE('tbl_cursos.clave', '=', $documento->numero_o_clave)
                         ->FIRST();
 
-        $data_directorio = contrato_directorio::WHERE('id_contrato', '=', $data_contrato->id_contrato)->FIRST();
-        $director = directorio::WHERE('id', '=', $data_directorio->contrato_iddirector)->FIRST();
-        $testigo1 = directorio::WHERE('id', '=', $data_directorio->contrato_idtestigo1)->FIRST();
-        // $testigo2 = directorio::WHERE('id', '=', $data_directorio->contrato_idtestigo2)->FIRST();
-        $testigo3 = directorio::WHERE('id', '=', $data_directorio->contrato_idtestigo3)->FIRST();
-
         $data = $contrato::SELECT('folios.id_folios','folios.importe_total','tbl_cursos.id','tbl_cursos.horas','tbl_cursos.fecha_apertura',
-                                    'tbl_cursos.tipo_curso','tbl_cursos.espe', 'tbl_cursos.clave','tbl_cursos.inicio','instructores.nombre','instructores.apellidoPaterno',
+                                    'tbl_cursos.tipo_curso','tbl_cursos.espe','tbl_cursos.unidad', 'tbl_cursos.clave','tbl_cursos.inicio','instructores.nombre','instructores.apellidoPaterno',
                                     'instructores.apellidoMaterno','tbl_cursos.instructor_tipo_identificacion','tbl_cursos.instructor_folio_identificacion',
                                     'instructores.rfc','tbl_cursos.modinstructor','instructores.curp','instructores.domicilio','tabla_supre.fecha_validacion')
                             ->WHERE('folios.id_folios', '=', $data_contrato->id_folios)
@@ -244,6 +238,9 @@ class FirmaController extends Controller {
                             ->LEFTJOIN('tbl_cursos', 'tbl_cursos.id', '=', 'folios.id_cursos')
                             ->LEFTJOIN('instructores', 'instructores.id', '=', 'tbl_cursos.id_instructor')
                             ->FIRST();
+
+        $uni = DB::Connection('pgsql')->Table('tbl_unidades')->SELECT('ubicacion')->WHERE('unidad', '=', $data->unidad)->FIRST();
+        $funcionarios = $this->funcionarios($uni->ubicacion);
                             //nomes especialidad
         $especialidad = especialidad_instructor::SELECT('especialidades.nombre')
                                                 ->WHERE('especialidad_instructores.id', '=', $data_contrato->instructor_perfilid)
@@ -266,9 +263,9 @@ class FirmaController extends Controller {
 
 
         if ($data->modinstructor == 'HONORARIOS') {
-            $pdf = PDF::loadView('layouts.firmaElectronica.contratohonorarios', compact('director','testigo1','testigo3','data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir','body_html'));
+            $pdf = PDF::loadView('layouts.firmaElectronica.contratohonorarios', compact('data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir','body_html','funcionarios'));
         }else {
-            $pdf = PDF::loadView('layouts.firmaElectronica.contratohasimilados', compact('director','testigo1','testigo3','data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir','body_html'));;
+            $pdf = PDF::loadView('layouts.firmaElectronica.contratohasimilados', compact('data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir','body_html','funcionarios'));;
         }
 
         return $pdf->stream("Contrato-Instructor-$data_contrato->numero_contrato.pdf");
@@ -384,6 +381,54 @@ class FirmaController extends Controller {
         $part[0] = number_format($part['0']);
         $cadwell = implode(".", $part);
         return ($cadwell);
+    }
+
+    public function funcionarios($unidad) {
+        $query = clone $direc = clone $ccp1 = clone $ccp2 = clone $delegado = clone $academico = clone $vinculacion = clone $destino = DB::Connection('pgsql')->Table('tbl_organismos AS o')->Select('f.nombre','f.cargo')
+            ->Join('tbl_funcionarios AS f', 'f.id_org', 'o.id')
+            ->Where('f.activo', 'true');
+
+        $direc = $direc->Join('tbl_unidades AS u', 'u.id', 'o.id_unidad')
+            ->Where('o.id_parent',1)
+            ->Where('u.unidad', $unidad)
+            ->First();
+
+        $destino = $destino->Where('o.id',13)->First();
+        $ccp1 = $ccp1->Where('o.id',1)->First();
+        $ccp2 = $ccp2->Where('o.id',12)->First();
+        $delegado = $delegado->Join('tbl_unidades AS u', 'u.id', 'o.id_unidad')
+            ->Where('o.nombre','LIKE','DELEG%')
+            ->Where('u.unidad', $unidad)
+            ->First();
+
+        $academico = $academico->Join('tbl_unidades AS u', 'u.id', 'o.id_unidad')
+            ->Where('f.cargo','LIKE','%ACADÉMICO%')
+            ->Where('u.unidad', $unidad)
+            ->First();
+
+        $vinculacion = $vinculacion->Join('tbl_unidades AS u', 'u.id', 'o.id_unidad')
+            ->Where('f.cargo','LIKE','%VINCULACIÓN%')
+            ->Where('u.unidad', $unidad)
+            ->First();
+
+        $funcionarios = [
+            'director' => $direc->nombre,
+            'directorp' => $direc->cargo,
+            'destino' => $destino->nombre,
+            'destinop' => $destino->cargo,
+            'ccp1' => $ccp1->nombre,
+            'ccp1p' => $ccp1->cargo,
+            'ccp2' => $ccp2->nombre,
+            'ccp2p' => $ccp2->cargo,
+            'delegado' => $delegado->nombre,
+            'delegadop' => $delegado->cargo,
+            'academico' => $academico->nombre,
+            'academicop' => $academico->cargo,
+            'elabora' => strtoupper(Auth::user()->name),
+            'elaborap' => strtoupper(Auth::user()->puesto)
+        ];
+
+        return $funcionarios;
     }
 
 
