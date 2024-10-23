@@ -44,7 +44,7 @@ class RegistroController extends Controller {
             'email' => $request->email,
             'tipo_usuario' => 3,
             'curp' => $request->curp,
-            'id_sivyc' => $id_instructor->id,
+            // 'id_sivyc' => $id_instructor->id,
             'password' => Hash::make($request->password),
         ])->assignRole($request->unidades);
 

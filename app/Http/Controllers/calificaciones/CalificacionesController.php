@@ -40,7 +40,7 @@ class CalificacionesController extends Controller {
         $alumnos = [];
         $denegado = '';
         if ($curso) {
-            if ($curso->id_instructor == Auth::user()->id_sivyc) {
+            if ($curso->curp == Auth::user()->curp) {
                 if (Auth::user()->unidad == 1) $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 3 days"));
                 else $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 1 days"));
                 $fecha_valida =  strtotime($fecha_hoy) - strtotime($curso->termino);
