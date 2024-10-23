@@ -73,7 +73,7 @@ class AsistenciaController extends Controller
 
                 if (Auth::user()->unidad == 1) $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 3 days"));
                 else $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 1 days"));
-                $fecha_valida = strtotime($fecha_hoy) - strtotime($fecha_penultimo);
+                $fecha_valida = strtotime($fecha_hoy) - strtotime($curso->termino);
 
                 // if ($fecha_valida < 0) $message = 'noProcede';
 
@@ -104,7 +104,7 @@ class AsistenciaController extends Controller
             } else $message = 'denegado';
 
         }
-        return view('layouts.asistencia.registrarAsistencias', compact('clave', 'curso', 'dias', 'alumnos', 'message','procesoPago'));
+        return view('layouts.asistencia.registrarAsistencias', compact('clave', 'curso', 'dias', 'alumnos', 'message','procesoPago','fecha_valida'));
     }
 
     public function update(Request $request) {
@@ -500,7 +500,8 @@ class AsistenciaController extends Controller
                     $status_campos = true;
                 }
             }else{
-                return redirect()->route('firma.inicio')->with('danger', 'LA ESTRUCTURA DEL JSON DE LA INCAPACIDAD NO ES VALIDA!');
+                // dd('[...]');
+                // return redirect()->route('firma.inicio')->with('danger', 'LA ESTRUCTURA DEL JSON DE LA INCAPACIDAD NO ES VALIDA!');
             }
 
             ##Validar si esta vacio
@@ -524,6 +525,7 @@ class AsistenciaController extends Controller
                     else{return redirect()->route('firma.inicio')->with('danger', 'NO SE ENCONTRON DATOS DE LA PERSONA QUE TOMARÁ EL LUGAR DEL ACADEMICO!');}
 
                 }else{
+                    // dd($dataArray);
                     ##Historial
                     $fecha_busqueda = 'Ini:'. $fecha_ini .'/Fin:'. $fecha_fin .'/IdFun:'. $id_firmante;
                     $clave_ar = array_search($fecha_busqueda, $historial);

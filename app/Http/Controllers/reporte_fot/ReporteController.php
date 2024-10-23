@@ -541,7 +541,7 @@ class ReporteController extends Controller
                     $status_campos = true;
                 }
             }else{
-                return "LA ESTRUCTURA DEL JSON DE LA INCAPACIDAD NO ES VALIDA!";
+                // return "LA ESTRUCTURA DEL JSON DE LA INCAPACIDAD NO ES VALIDA!";
             }
 
             ##Validar si esta vacio

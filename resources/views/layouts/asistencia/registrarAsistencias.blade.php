@@ -158,7 +158,9 @@
                                     <button id="btnLista" type="button" class="btn btn-outline-info mr-2">GENERAR LISTA DE ASISTENCIA</button>
                                     @if (!$curso->asis_finalizado && !$procesoPago)
                                         <button id="btnGuardar" type="button" class="btn btn-outline-success mr-2">GUARDAR ASISTENCIAS</button>
-                                        <button id="btnEnviar" type="button" class="btn btn-outline-danger">ENVIAR A UNIDAD</button>
+                                        @if ($fecha_valida >= 0)
+                                            <button id="btnEnviar" type="button" class="btn btn-outline-danger">ENVIAR A UNIDAD</button>
+                                        @endif
                                     @endif
                                 </div>
                             </div>

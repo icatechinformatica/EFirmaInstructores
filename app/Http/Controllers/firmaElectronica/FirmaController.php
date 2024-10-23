@@ -221,75 +221,55 @@ class FirmaController extends Controller {
     }
 
     public function generarPDF(Request $request) {
-        $documento = DocumentosFirmar::where('id', $request->txtIdGenerar)->first();
-            $contrato = new contratos();
-            $data_contrato = contratos::SELECT('contratos.*')
-                            ->JOIN('folios', 'folios.id_folios', 'contratos.id_folios')
-                            ->JOIN('tbl_cursos','tbl_cursos.id','folios.id_cursos')
-                            ->WHERE('tbl_cursos.clave', '=', $documento->numero_o_clave)
-                            ->FIRST();
+        $documento = DocumentosFirmar::where('id', $request->txtIdGenerar)->Where('tipo_archivo','Contrato')->first();
+        $contrato = new contratos();
+        $data_contrato = contratos::SELECT('contratos.*')
+                        ->JOIN('folios', 'folios.id_folios', 'contratos.id_folios')
+                        ->JOIN('tbl_cursos','tbl_cursos.id','folios.id_cursos')
+                        ->WHERE('tbl_cursos.clave', '=', $documento->numero_o_clave)
+                        ->FIRST();
 
-            $data_directorio = contrato_directorio::WHERE('id_contrato', '=', $data_contrato->id_contrato)->FIRST();
-            $director = directorio::WHERE('id', '=', $data_directorio->contrato_iddirector)->FIRST();
-            $testigo1 = directorio::WHERE('id', '=', $data_directorio->contrato_idtestigo1)->FIRST();
-            $testigo2 = directorio::WHERE('id', '=', $data_directorio->contrato_idtestigo2)->FIRST();
-            $testigo3 = directorio::WHERE('id', '=', $data_directorio->contrato_idtestigo3)->FIRST();
-
-            $data = $contrato::SELECT('folios.id_folios','folios.importe_total','tbl_cursos.id','tbl_cursos.horas',
-                                    'tbl_cursos.tipo_curso','tbl_cursos.espe', 'tbl_cursos.clave','instructores.nombre','instructores.apellidoPaterno',
-                                    'instructores.apellidoMaterno','tbl_cursos.instructor_tipo_identificacion','tbl_cursos.instructor_folio_identificacion','instructores.rfc','tbl_cursos.modinstructor',
-                                    'instructores.curp','instructores.domicilio')
+        $data = $contrato::SELECT('folios.id_folios','folios.importe_total','tbl_cursos.id','tbl_cursos.horas','tbl_cursos.fecha_apertura',
+                                    'tbl_cursos.tipo_curso','tbl_cursos.espe','tbl_cursos.unidad', 'tbl_cursos.clave','tbl_cursos.inicio','instructores.nombre','instructores.apellidoPaterno',
+                                    'instructores.apellidoMaterno','tbl_cursos.instructor_tipo_identificacion','tbl_cursos.instructor_folio_identificacion',
+                                    'instructores.rfc','tbl_cursos.modinstructor','instructores.curp','instructores.domicilio','tabla_supre.fecha_validacion')
                             ->WHERE('folios.id_folios', '=', $data_contrato->id_folios)
                             ->LEFTJOIN('folios', 'folios.id_folios', '=', 'contratos.id_folios')
+                            ->LEFTJOIN('tabla_supre', 'tabla_supre.id', '=', 'folios.id_supre')
                             ->LEFTJOIN('tbl_cursos', 'tbl_cursos.id', '=', 'folios.id_cursos')
                             ->LEFTJOIN('instructores', 'instructores.id', '=', 'tbl_cursos.id_instructor')
                             ->FIRST();
+
+        $uni = DB::Connection('pgsql')->Table('tbl_unidades')->SELECT('ubicacion')->WHERE('unidad', '=', $data->unidad)->FIRST();
+        $funcionarios = $this->funcionarios($uni->ubicacion);
                             //nomes especialidad
-            $especialidad = especialidad_instructor::SELECT('especialidades.nombre')
-                                                    ->WHERE('especialidad_instructores.id', '=', $data_contrato->instructor_perfilid)
-                                                    ->LEFTJOIN('especialidades', 'especialidades.id', '=', 'especialidad_instructores.especialidad_id')
-                                                    ->FIRST();
+        $especialidad = especialidad_instructor::SELECT('especialidades.nombre')
+                                                ->WHERE('especialidad_instructores.id', '=', $data_contrato->instructor_perfilid)
+                                                ->LEFTJOIN('especialidades', 'especialidades.id', '=', 'especialidad_instructores.especialidad_id')
+                                                ->FIRST();
 
-            $fecha_act = new Carbon('23-06-2022');
-            $fecha_fir = new Carbon($data_contrato->fecha_firma);
-            $nomins = $data->nombre . ' ' . $data->apellidoPaterno . ' ' . $data->apellidoMaterno;
-            $date = strtotime($data_contrato->fecha_firma);
-            $D = date('d', $date);
-            $M = $this->toMonth(date('m', $date));
-            $Y = date("Y", $date);
+        $fecha_act = new Carbon('23-06-2022');
+        $fecha_fir = new Carbon($data_contrato->fecha_firma);
+        $nomins = $data->nombre . ' ' . $data->apellidoPaterno . ' ' . $data->apellidoMaterno;
 
-            $cantidad = $this->numberFormat($data_contrato->cantidad_numero);
-            $monto = explode(".",strval($data_contrato->cantidad_numero));
+        $cantidad = $this->numberFormat($data_contrato->cantidad_numero);
+        $monto = explode(".",strval($data_contrato->cantidad_numero));
 
-            // //Generacion de QR
-            // $verificacion = "https://innovacion.chiapas.gob.mx/validacionDocumentoPrueba/consulta/Certificado3?guid=$uuid&no_folio=$no_oficio";
-            // ob_start();
-            // QRcode::png($verificacion);
-            // $qrCodeData = ob_get_contents();
-            // ob_end_clean();
-            // $qrCodeBase64 = base64_encode($qrCodeData);
-            // // Fin de Generacion
+        $date = strtotime($data_contrato->fecha_firma);
+        $D = date('d', $date);
+        $M = $this->toMonth(date('m', $date));
+        $Y = date("Y", $date);
 
-            if($data->tipo_curso == 'CURSO')
-            {
-                if ($data->modinstructor == 'HONORARIOS') {
-                    $pdf = PDF::loadView('layouts.firmaElectronica.contratohonorarios', compact('director','testigo1','testigo2','testigo3','data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir'));
-                }else {
-                    $pdf = PDF::loadView('layouts.firmaElectronica.contratohasimilados', compact('director','testigo1','testigo2','testigo3','data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir'));
-                }
-            }
-            else
-            {
-                $pdf = PDF::loadView('layouts.firmaElectronica.contratocertificacion', compact('director','testigo1','testigo2','testigo3','data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir'));
-            }
-            return $pdf->stream("Contrato-Instructor-$data_contrato->numero_contrato.pdf");
+        $body_html = json_decode($documento->obj_documento_interno);
 
-        $verificacion = "https://innovacion.chiapas.gob.mx/validacionDocumentoPrueba/consulta/Certificado3?guid=$uuid&no_folio=$folio";
 
-        $parts = explode('.', $folio);
-        $locat = storage_path("app/public/qrcode/$parts[0].png");
-        $location = str_replace('\\','/', $locat);
-        \PHPQRCode\QRcode::png($verificacion, $location, 'L', 10, 0);
+        if ($data->modinstructor == 'HONORARIOS') {
+            $pdf = PDF::loadView('layouts.firmaElectronica.contratohonorarios', compact('data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir','body_html','funcionarios'));
+        }else {
+            $pdf = PDF::loadView('layouts.firmaElectronica.contratohasimilados', compact('data_contrato','data','nomins','D','M','Y','monto','especialidad','cantidad','fecha_act','fecha_fir','body_html','funcionarios'));;
+        }
+
+        return $pdf->stream("Contrato-Instructor-$data_contrato->numero_contrato.pdf");
     }
 
     public function cancelarDocumento(Request $request) {
@@ -402,6 +382,54 @@ class FirmaController extends Controller {
         $part[0] = number_format($part['0']);
         $cadwell = implode(".", $part);
         return ($cadwell);
+    }
+
+    public function funcionarios($unidad) {
+        $query = clone $direc = clone $ccp1 = clone $ccp2 = clone $delegado = clone $academico = clone $vinculacion = clone $destino = DB::Connection('pgsql')->Table('tbl_organismos AS o')->Select('f.nombre','f.cargo')
+            ->Join('tbl_funcionarios AS f', 'f.id_org', 'o.id')
+            ->Where('f.activo', 'true');
+
+        $direc = $direc->Join('tbl_unidades AS u', 'u.id', 'o.id_unidad')
+            ->Where('o.id_parent',1)
+            ->Where('u.unidad', $unidad)
+            ->First();
+
+        $destino = $destino->Where('o.id',13)->First();
+        $ccp1 = $ccp1->Where('o.id',1)->First();
+        $ccp2 = $ccp2->Where('o.id',12)->First();
+        $delegado = $delegado->Join('tbl_unidades AS u', 'u.id', 'o.id_unidad')
+            ->Where('o.nombre','LIKE','DELEG%')
+            ->Where('u.unidad', $unidad)
+            ->First();
+
+        $academico = $academico->Join('tbl_unidades AS u', 'u.id', 'o.id_unidad')
+            ->Where('f.cargo','LIKE','%ACADÉMICO%')
+            ->Where('u.unidad', $unidad)
+            ->First();
+
+        $vinculacion = $vinculacion->Join('tbl_unidades AS u', 'u.id', 'o.id_unidad')
+            ->Where('f.cargo','LIKE','%VINCULACIÓN%')
+            ->Where('u.unidad', $unidad)
+            ->First();
+
+        $funcionarios = [
+            'director' => $direc->nombre,
+            'directorp' => $direc->cargo,
+            'destino' => $destino->nombre,
+            'destinop' => $destino->cargo,
+            'ccp1' => $ccp1->nombre,
+            'ccp1p' => $ccp1->cargo,
+            'ccp2' => $ccp2->nombre,
+            'ccp2p' => $ccp2->cargo,
+            'delegado' => $delegado->nombre,
+            'delegadop' => $delegado->cargo,
+            'academico' => $academico->nombre,
+            'academicop' => $academico->cargo,
+            'elabora' => strtoupper(Auth::user()->name),
+            'elaborap' => strtoupper(Auth::user()->puesto)
+        ];
+
+        return $funcionarios;
     }
 
 
