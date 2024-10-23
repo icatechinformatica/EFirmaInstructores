@@ -53,7 +53,7 @@
         </form>
 
         <div class="card">
-            <div class="card-header"><div style="display: inline-block;">Mis documentos</div><div style="display: inline-block; margin-left: 70%;"> CURP: {{$curpUser->curp}}</div></div>
+            <div class="card-header"><div style="display: inline-block;">Mis documentos</div><div style="display: inline-block; margin-left: 70%;"> CURP: {{$curp}}</div></div>
             <div class="card-body px-0">
 
                 <div class="row">

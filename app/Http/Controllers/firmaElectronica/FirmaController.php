@@ -34,9 +34,9 @@ class FirmaController extends Controller {
     //Hola esto es una prueba
     public function index(Request $request) {
         $curp = Auth::user()->curp;
-        $curpUser = DB::connection('pgsql')->Table('instructores')->Select('curp')
-            ->Where('id', Auth::user()->id_sivyc)
-            ->First();
+        // $curpUser = DB::connection('pgsql')->Table('instructores')->Select('curp')
+        //     ->Where('id', Auth::user()->id_sivyc)
+        //     ->First();
 
         $docsFirmar1 = DocumentosFirmar::where('status','!=','CANCELADO')
             ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x
@@ -106,7 +106,7 @@ class FirmaController extends Controller {
         }
         $token = $getToken->token;
 
-        return view('layouts.firmaElectronica.firmaElectronica', compact('docsFirmar', 'curp', 'docsFirmados', 'docsValidados', 'docsCancelados', 'tipo_documento', 'token','curpUser'));
+        return view('layouts.firmaElectronica.firmaElectronica', compact('docsFirmar', 'curp', 'docsFirmados', 'docsValidados', 'docsCancelados', 'tipo_documento', 'token'));
     }
 
     public function update(Request $request) {
