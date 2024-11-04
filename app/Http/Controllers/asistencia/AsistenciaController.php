@@ -171,35 +171,52 @@ class AsistenciaController extends Controller
             $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first();
             if ($curso) {
                 if ($curso->status_curso == "AUTORIZADO") {
-                    $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select(
-                        'i.id',
-                        'i.matricula',
-                        'i.alumno',
-                        'i.calificacion',
-                        'f.folio',
-                        'i.asistencias'
-                    )->leftJoin('tbl_folios as f', function ($join) {
-                        $join->on('f.id', '=', 'i.id_folio');
-                    })->where('i.id_curso', $curso->id)
-                        ->where('i.status', 'INSCRITO')
-                        ->orderby('i.alumno')->get();
-                    if (!$alumnos) return "NO HAY ALUMNOS INSCRITOS";
+                    $documento = DocumentosFirmar::where('numero_o_clave', $clave)
+                    ->WhereNotIn('status',['CANCELADO','CANCELADO ICTI'])
+                    ->Where('tipo_archivo','Lista de asistencia')
+                    ->first();
 
-                    foreach ($alumnos as $key => $value) {
-                        $value->asistencias = json_decode($value->asistencias, true);
+                    if(is_null($documento)) {
+                        $body = $this->create_body($clave);
+                        $body_html = $body['body_html'];
+                        $header = $body['header'];
+                    } else {
+                        $body = json_decode($documento->obj_documento_interno);
+                        $body_html = $body->body_html;
+                        $header = $body->header;
                     }
-                    $mes = $this->mes;
-                    $consec = 1;
-                    if ($curso->inicio and $curso->termino) {
-                        $inicio = explode('-', $curso->inicio); $inicio[2] = '01';
-                        $termino = explode('-', $curso->termino); $termino[2] = '01';
-                        $meses = $this->verMeses(array($inicio[0].'-'.$inicio[1].'-'.$inicio[2], $termino[0].'-'.$termino[1].'-'.$termino[2]));
 
-                    } else  return "El Curso no tiene registrado la fecha de inicio y de termino";
+                    //-- ELIMINAR DESPUES DEL 01/01/2025 --
+                    // $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select(
+                    //     'i.id',
+                    //     'i.matricula',
+                    //     'i.alumno',
+                    //     'i.calificacion',
+                    //     'f.folio',
+                    //     'i.asistencias'
+                    // )->leftJoin('tbl_folios as f', function ($join) {
+                    //     $join->on('f.id', '=', 'i.id_folio');
+                    // })->where('i.id_curso', $curso->id)
+                    //     ->where('i.status', 'INSCRITO')
+                    //     ->orderby('i.alumno')->get();
+                    // if (!$alumnos) return "NO HAY ALUMNOS INSCRITOS";
+
+                    // foreach ($alumnos as $key => $value) {
+                    //     $value->asistencias = json_decode($value->asistencias, true);
+                    // }
+                    // $mes = $this->mes;
+                    // $consec = 1;
+                    // if ($curso->inicio and $curso->termino) {
+                    //     $inicio = explode('-', $curso->inicio); $inicio[2] = '01';
+                    //     $termino = explode('-', $curso->termino); $termino[2] = '01';
+                    //     $meses = $this->verMeses(array($inicio[0].'-'.$inicio[1].'-'.$inicio[2], $termino[0].'-'.$termino[1].'-'.$termino[2]));
+
+                    // } else  return "El Curso no tiene registrado la fecha de inicio y de termino";
 
                     // tbl_cursos::where('id', $curso->id)->update(['asis_finalizado' => true]);
 
-                    $pdf = PDF::loadView('layouts.asistencia.reporteAsistencia', compact('curso', 'alumnos', 'mes', 'consec', 'meses'));
+
+                    $pdf = PDF::loadView('layouts.asistencia.reporteAsistencia', compact('body_html', 'header'));
                     $pdf->setPaper('Letter', 'landscape');
                     $file = "ASISTENCIA_$clave.PDF";
                     return $pdf->stream($file);
@@ -225,7 +242,7 @@ class AsistenciaController extends Controller
                 ->First();
 
             $body = $this->create_body($clave,$info); //creacion de body
-            $body = str_replace(["\r", "\n", "\f"], ' ', $body);
+            // $body = str_replace(["\r", "\n", "\f"], ' ', $body);
 
             $nameFileOriginal = 'Lista de asistencia '.$info->clave.'.pdf';
             $numOficio = 'LAD-04-'.$info->clave;
@@ -289,7 +306,7 @@ class AsistenciaController extends Controller
                         // 'checksum_archivo' => utf8_encode($text)
                     ],
                     // 'cuerpo' => ['Por medio de la presente me permito solicitar el archivo '.$nameFile]
-                    'cuerpo' => [$body]
+                    'cuerpo' => [$body['body_xml']]
                 ],
                 'firmantes' => [
                     '_attributes' => [
@@ -300,6 +317,8 @@ class AsistenciaController extends Controller
                     ]
                 ],
             ];
+
+            array_pop($body);
             //Creacion de estampa de hora exacta de creacion
             $date = Carbon::now();
             $month = $date->month < 10 ? '0'.$date->month : $date->month;
@@ -344,7 +363,7 @@ class AsistenciaController extends Controller
                     $dataInsert = new DocumentosFirmar();
                 }
                 $dataInsert->obj_documento = json_encode($ArrayXml);
-                $dataInsert->obj_documento_interno = json_encode($ArrayXml);
+                $dataInsert->obj_documento_interno = json_encode($body);
                 $dataInsert->status = 'EnFirma';
                 // $dataInsert->link_pdf = $urlFile;
                 $dataInsert->cadena_original = $response->json()['cadenaOriginal'];
@@ -407,7 +426,7 @@ class AsistenciaController extends Controller
         return 'Exito';
     }
 
-    private function create_body($clave, $firmantes) {
+    private function create_body($clave, $firmantes = null) {
         $curso = DB::Connection('pgsql')->Table('tbl_cursos')->select(
             'tbl_cursos.*',
             DB::raw('right(clave,4) as grupo'),
@@ -441,43 +460,225 @@ class AsistenciaController extends Controller
         $termino = explode('-', $curso->termino); $termino[2] = '01';
         $meses = $this->verMeses(array($inicio[0].'-'.$inicio[1].'-'.$inicio[2], $termino[0].'-'.$termino[1].'-'.$termino[2]));
 
-        $body = "SUBSECRETARÍA DE EDUCACIÓN E INVESTIGACIÓN TECNOLÓGICAS \n".
+        $array_html['header'] = '<header>
+            <img src="img/reportes/sep.png" alt="sep" width="16%" style="position:fixed; left:0; margin: -70px 0 0 20px;" />
+            <h6>SUBSECRETARÍA DE EDUCACIÓN E INVESTIGACIÓN TECNOLÓGICAS</h6>
+            <h6>DIRECCIÓN GENERAL DE CENTROS DE FORMACIÓN PARA EL TRABAJO</h6>
+            <h6>LISTA DE ASISTENCIA</h6>
+            <h6>(LAD-04)</h6>
+        </header>';
+        $array_html['body_html'] = null;
+        if (isset($meses)) {
+            foreach ($meses as $key => $mes) {
+                $consec = 1;
+                $array_html['body_html'] = $array_html['body_html']. '<table class="tabla">
+                    <thead>
+                        <tr>
+                            <td ';
+                                if (explode('-', $mes['ultimoDia'])[2] == 28) { $array_html['body_html'] = $array_html['body_html']. 'colspan="33"'; }
+                                elseif (explode('-', $mes['ultimoDia'])[2] == 29) { $array_html['body_html'] = $array_html['body_html']. 'colspan="34"';}
+                                elseif (explode('-', $mes['ultimoDia'])[2] == 30) { $array_html['body_html'] = $array_html['body_html']. 'colspan="35"';}
+                                else { $array_html['body_html'] = $array_html['body_html']. 'colspan="36"';}
+                                $array_html['body_html'] = $array_html['body_html']. '>
+                                <div id="curso">
+                                    UNIDAD DE CAPACITACIÓN:
+                                    <span class="tab">'. $curso->plantel. ' '. $curso->unidad. '</span>
+                                    CLAVE CCT: <span class="tab">'. $curso->cct. '</span>
+                                    CICLO ESCOLAR: <span class="tab">'. $curso->ciclo. '</span>
+                                    GRUPO: <span class="tab">'. $curso->grupo. '</span>
+                                    MES: <span class="tab">'. $mes['mes']. '</span>
+                                    AÑO: &nbsp;&nbsp;'. $mes['year']. '
+                                    <br />
+                                    AREA: <span class="tab1">'. $curso->area. '</span>
+                                    ESPECIALIDAD: <span class="tab1">'. $curso->espe. '</span>
+                                    CURSO: <span class="tab1">'. $curso->curso. '</span>
+                                    CLAVE: &nbsp;&nbsp;'. $curso->clave .'
+                                    <br />
+                                    FECHA INICIO: <span class="tab1">'. $curso->fechaini. '</span>
+                                    FECHA TERMINO: <span class="tab1">'. $curso->fechafin. '</span>
+                                    HORARIO: '. $curso->dia. ' DE '. $curso->hini. ' A '. $curso->hfin. '&nbsp;&nbsp;&nbsp;
+                                    CURP: &nbsp;&nbsp;'. $curso->curp. ' &nbsp;&nbsp;&nbsp;
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th ';
+                                if (explode('-', $mes['ultimoDia'])[2] == 28) {$array_html['body_html'] = $array_html['body_html']. 'colspan="33"';}
+                                elseif (explode('-', $mes['ultimoDia'])[2] == 29){$array_html['body_html'] = $array_html['body_html']. 'colspan="34"';}
+                                elseif (explode('-', $mes['ultimoDia'])[2] == 30){$array_html['body_html'] = $array_html['body_html']. 'colspan="35"';}
+                                else{ $array_html['body_html'] = $array_html['body_html']. 'colspan="36"';}
+                                $array_html['body_html'] = $array_html['body_html']. 'style="border-left: white; border-right: white;">
+                            </th>
+                        </tr>
+                        <tr>
+                            <th width="15px" rowspan="2">N<br />U<br />M</th>
+                            <th width="100px" rowspan="2">NÚMERO DE <br />CONTROL</th>
+                            <th width="280px">NOMBRE DEL ALUMNO</th>';
+                            foreach ($mes['dias'] as $keyD => $dia) {
+                                $counting = $keyD+1;
+                                $array_html['body_html'] = $array_html['body_html']. '<th width="10px" rowspan="2"><b>'. $counting . "</b></th>\n";
+                            }
+                            $array_html['body_html'] = $array_html['body_html']. '<th colspan="2"><b>TOTAL</b></th>
+                        </tr>
+                        <tr>
+                            <th>PRIMER APELLIDO/SEGUNDO APELLIDO/NOMBRE(S)</th>
+                            <th> A </th>
+                            <th> I </th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+                        $i = 16;
+                        foreach ($alumnos as $a){
+                            $tAsis = 0;
+                            $tFalta = 0;
+                            $consec++;
+                            $array_html['body_html'] = $array_html['body_html']. '<tr>
+                            <td>'. $consec .'</td>
+                            <td>'. $a->matricula. '</td>
+                            <td>'. $a->alumno. '</td>';
+                            foreach ($mes['dias'] as $dia) {
+                                $array_html['body_html'] = $array_html['body_html']. '<td>';
+                                if ($a->asistencias != null) {
+                                    foreach ($a->asistencias as $asistencia) {
+                                        if ($asistencia['fecha'] == $dia && $asistencia['asistencia'] == true) {
+                                            $array_html['body_html'] = $array_html['body_html']. '<strong>*</strong>';
+                                            $tAsis++;
+                                        } elseif($asistencia['fecha'] == $dia && $asistencia['asistencia'] == false) {
+                                            $array_html['body_html'] = $array_html['body_html']. 'x';
+                                            $tFalta++;
+                                        }
+                                    }
+                                }
+                                $array_html['body_html'] = $array_html['body_html']. "</td>";
+                            }
+                            $array_html['body_html'] = $array_html['body_html']. '<td>'. $tAsis. '</td>
+                            <td>'. $tFalta. '</td>
+                            </tr>';
+                            if($consec > $i && isset($alumnos[$consec]->alumno)) {
+                                $array_html['body_html'] = $array_html['body_html']. '</tbody>
+                                </table>
+                                <br><br><br>
+                                <div class="page-break"></div>';
+                                $i = $i+15;
+
+                                $array_html['body_html'] = $array_html['body_html']. '<table class="tabla">
+                                    <thead>
+                                        <tr>
+                                            <td';
+                                                if (explode('-', $mes['ultimoDia'])[2] == 28) {
+                                                    $array_html['body_html'] = $array_html['body_html']. 'colspan="33"';
+                                                } elseif (explode('-', $mes['ultimoDia'])[2] == 29) {
+                                                    $array_html['body_html'] = $array_html['body_html']. 'colspan="34"';
+                                                } elseif (explode('-', $mes['ultimoDia'])[2] == 30) {
+                                                    $array_html['body_html'] = $array_html['body_html']. 'colspan="35"';
+                                                } else {
+                                                    $array_html['body_html'] = $array_html['body_html']. 'colspan="36"';
+                                                }
+                                                $array_html['body_html'] = $array_html['body_html']. '>
+                                                <div id="curso">
+                                                    UNIDAD DE CAPACITACIÓN:
+                                                    <span class="tab">'. $curso->plantel. ' '. $curso->unidad. '</span>
+                                                    CLAVE CCT: <span class="tab">'. $curso->cct. '</span>
+                                                    CICLO ESCOLAR: <span class="tab">'. $curso->ciclo. '</span>
+                                                    GRUPO: <span class="tab">'. $curso->grupo. '</span>
+                                                    MES: <span class="tab">'. $mes['mes']. '</span>
+                                                    AÑO: &nbsp;&nbsp;'. $mes['year'].
+                                                    '<br />
+                                                    AREA: <span class="tab1">'. $curso->area. '</span>
+                                                    ESPECIALIDAD: <span class="tab1">'. $curso->espe. '</span>
+                                                    CURSO: <span class="tab1">'. $curso->curso. '</span>
+                                                    CLAVE: &nbsp;&nbsp;'. $curso->clave.
+                                                    '<br />
+                                                    FECHA INICIO: <span class="tab1">'. $curso->fechaini. '</span>
+                                                    FECHA TERMINO: <span class="tab1">'. $curso->fechafin. '</span>
+                                                    HORARIO: <span class="tab2">'. $curso->dia. ' DE '. $curso->hini. ' A '. $curso->hfin. '</span>
+                                                    CURP: &nbsp;&nbsp;'. $curso->curp.
+                                                '</div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th';
+                                                if (explode('-', $mes['ultimoDia'])[2] == 28) {
+                                                    $array_html['body_html'] = $array_html['body_html']. 'colspan="33"';
+                                                } elseif (explode('-', $mes['ultimoDia'])[2] == 29) {
+                                                    $array_html['body_html'] = $array_html['body_html']. 'colspan="34"';
+                                                } elseif (explode('-', $mes['ultimoDia'])[2] == 30) {
+                                                    $array_html['body_html'] = $array_html['body_html']. 'colspan="35"';
+                                                } else {
+                                                    $array_html['body_html'] = $array_html['body_html']. 'colspan="36"';
+                                                }
+                                                $array_html['body_html'] = $array_html['body_html']. 'style="border-left: white; border-right: white;">
+                                            </th>
+                                        </tr>
+                                        <tr>
+                                            <th width="15px" rowspan="2">N<br />U<br />M</th>
+                                            <th width="100px" rowspan="2">NÚMERO DE <br />CONTROL</th>
+                                            <th width="280px">NOMBRE DEL ALUMNO</th>';
+                                            foreach ($mes['dias'] as $keyD => $dia) {
+                                                $counting = $keyD+1;
+                                                $array_html['body_html'] = $array_html['body_html']. '<th width="10px" rowspan="2"><b>'. $counting. '</b></th>';
+                                            }
+                                            $array_html['body_html'] = $array_html['body_html']. '<th colspan="2"><b>TOTAL</b></th>
+                                        </tr>
+                                        <tr>
+                                            <th>PRIMER APELLIDO/SEGUNDO APELLIDO/NOMBRE(S)</th>
+                                            <th> A </th>
+                                            <th> I </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>';
+                            }
+                        }
+                        $array_html['body_html'] = $array_html['body_html']. '</tbody>
+                    <tfoot>
+                    </tfoot>
+                </table>
+                <br><br><br>';
+                if ($key < count($meses) - 1) {
+                    $array_html['body_html'] = $array_html['body_html']. '<p style="page-break-before: always;"></p>';
+                }
+            }
+        } else {
+             dd('El Curso no tiene registrado la fecha de inicio y de termino' );
+        }
+
+        $array_html['body_xml'] = "SUBSECRETARÍA DE EDUCACIÓN E INVESTIGACIÓN TECNOLÓGICAS \n".
         "DIRECCIÓN GENERAL DE CENTROS DE FORMACIÓN PARA EL TRABAJO \n".
         "LISTA DE ASISTENCIA \n".
         "(LAD-04) \n";
 
         foreach($meses as $key => $mes) {
             $consec = 1;
-            $body = $body. 'UNIDAD DE CAPACITACIÓN: '. $curso->plantel. ' '.   $curso->unidad. ' CLAVE CCT: '. $curso->cct. ' CICLO ESCOLAR: '. $curso->ciclo. ' GRUPO: '. $curso->grupo. ' MES: '. $mes['mes'] . ' AÑO: '. $mes['year'].
+            $array_html['body_xml'] = $array_html['body_xml']. 'UNIDAD DE CAPACITACIÓN: '. $curso->plantel. ' '.   $curso->unidad. ' CLAVE CCT: '. $curso->cct. ' CICLO ESCOLAR: '. $curso->ciclo. ' GRUPO: '. $curso->grupo. ' MES: '. $mes['mes'] . ' AÑO: '. $mes['year'].
             "\n AREA: ". $curso->area. ' ESPECIALIDAD: '. $curso->espe. ' CURSO: '. $curso->curso. ' CLAVE: '. $curso->clave.
             "\n FECHA INICIO: ". $curso->fechaini. ' FECHA TERMINO: '. $curso->fechafin. ' HORARIO: '. $curso->dia. ' DE '. $curso->hini. ' A '. $curso->hfin. ' CURP: '. $curso->curp.
             "NUM NÚMERO DE CONTROL NOMBRE DEL ALUMNO PRIMER APELLIDO/SEGUNDO APELLIDO/NOMBRE(S) \n";
             foreach($mes['dias'] as $keyD => $dia){
-                $body = ' '. $body. ' '. ($keyD+1);
+                $array_html['body_xml'] = ' '. $array_html['body_xml']. ' '. ($keyD+1);
             }
-            $body = $body. ' TOTAL '. ' A I ';
+            $array_html['body_xml'] = $array_html['body_xml']. ' TOTAL '. ' A I ';
             foreach($alumnos as $a) {
                 $tAsis = 0;
                 $tFalta = 0;
-                $body = $body . "\n". $consec++. ' '. $a->matricula. ' '. $a->alumno. ' ';
+                $array_html['body_xml'] = $array_html['body_xml'] . "\n". $consec++. ' '. $a->matricula. ' '. $a->alumno. ' ';
                 foreach($mes['dias'] as $dia) {
                     if($a->asistencias != null) {
                         foreach($a->asistencias as $asistencia) {
                             if($asistencia['fecha'] == $dia && $asistencia['asistencia'] == true) {
-                                $body = $body. '* ';
+                                $array_html['body_xml'] = $array_html['body_xml']. '* ';
                                 $tAsis++;
                             } else if($asistencia['fecha'] == $dia && $asistencia['asistencia'] == false) {
-                                $body = $body. 'x ';
+                                $array_html['body_xml'] = $array_html['body_xml']. 'x ';
                                 $tFalta++;
                             }
                         }
                     }
                 }
-                $body = $body. $tAsis. ' '. $tFalta. ' ';
+                $array_html['body_xml'] = $array_html['body_xml']. $tAsis. ' '. $tFalta. ' ';
             }
         }
 
-        return $body;
+        return $array_html;
     }
 
     ### BY JOSE LUIS / VALIDACIÓN DE INCAPACIDAD

@@ -109,41 +109,18 @@
 </head>
 
 <body>
-    <header>
+    {{-- <header>
         <img src="img/reportes/sep.png" alt='sep' width="12%" style='position:fixed; left:0; margin: -70px 0 0 20px;' />
         <h6>SUBSECRETAR&Iacute;A DE EDUCACI&Oacute;N E INVESTIGACI&Oacute;N TECNOL&Oacute;GICAS</h6>
         <h6>DIRECCI&Oacute;N GENERAL DE CENTROS DE FORMACI&Oacute;N PARA EL TRABAJO</h6>
         <h6>LISTA DE ASISTENCIA</h6>
         <h6>(LAD-04)</h6>
 
-    </header>
-
-    {{-- <footer>
-        <table class="tablaf" width="100%">
-            <tbody>
-                <tr>
-                    <td width="10%">&nbsp; </td>
-                    <td width="25%">
-                        <br /><br /><br /><br /><br /><br />
-                        {{ $curso->nombre }}
-                        <hr width="280px" />
-                        NOMBRE Y FIRMA DEL INSTRUCTOR
-                        <br /><br /><br />
-                    </td>
-                    <td width="25%">&nbsp;</td>
-                    <td width="15%">
-                        <br /><br /><br /><br /><br /><br />
-                        <hr width="120px" />
-                        SELLO
-                        <br /><br /><br />
-                    </td>
-                    <td width="15%">&nbsp;</td>
-                </tr>
-            </tbody>
-        </table>
-    </footer> --}}
-
-    @if (isset($meses))
+    </header> --}}
+    {!! $header !!}
+    {!! $body_html !!}
+    {{-- ELIMINAR DESPUES DEL 01/01/2025 --}}
+    {{-- @if (isset($meses))
         @foreach ($meses as $key => $mes)
             @php
                 $consec = 1;
@@ -151,7 +128,7 @@
             <table class="tabla">
                 <thead>
                     <tr>
-                        <td 
+                        <td
                             @if (explode('-', $mes['ultimoDia'])[2] == 28)
                                 colspan="33"
                             @elseif (explode('-', $mes['ultimoDia'])[2] == 29)
@@ -163,7 +140,7 @@
                             @endif
                             >
                             <div id="curso">
-                                UNIDAD DE CAPACITACI&Oacute;N: 
+                                UNIDAD DE CAPACITACI&Oacute;N:
                                 <span class="tab">{{ $curso->plantel }} {{ $curso->unidad }}</span>
                                 CLAVE CCT: <span class="tab">{{ $curso->cct }}</span>
                                 CICLO ESCOLAR: <span class="tab">{{ $curso->ciclo }}</span>
@@ -184,7 +161,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <th 
+                        <th
                             @if (explode('-', $mes['ultimoDia'])[2] == 28)
                                 colspan="33"
                             @elseif (explode('-', $mes['ultimoDia'])[2] == 29)
@@ -216,7 +193,7 @@
                 <tbody>
                     @foreach ($alumnos as $a)
                         @php
-                            $tAsis = 0; 
+                            $tAsis = 0;
                             $tFalta = 0;
                         @endphp
                         <tr>
@@ -256,7 +233,7 @@
         @endforeach
     @else
         {{ 'El Curso no tiene registrado la fecha de inicio y de termino' }}
-    @endif 
+    @endif --}}
 </body>
 
 </html>
