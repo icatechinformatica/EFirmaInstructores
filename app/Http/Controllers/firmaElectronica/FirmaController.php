@@ -127,31 +127,26 @@ class FirmaController extends Controller {
                 $obj_documento['firmantes']['firmante'][0][$key] = $value;
             }
         }
-        // foreach ($obj_documento_interno['firmantes']['firmante'][0] as $key => $value) {
-        //     if ($value['_attributes']['curp_firmante'] == $request->curp) {
-        //         $value['_attributes']['fecha_firmado_firmante'] = $request->fechaFirmado;
-        //         $value['_attributes']['no_serie_firmante'] = $request->serieFirmante;
-        //         $value['_attributes']['firma_firmante'] = $request->firma;
-        //         $value['_attributes']['certificado'] = $request->certificado;
-        //         $obj_documento_interno['firmantes']['firmante'][0][$key] = $value;
-        //     }
-        // }
 
         $array = XmlToArray::convert($documento->documento);
-        // $array2 = XmlToArray::convert($documento->documento_interno);
         $array['DocumentoChis']['firmantes'] = $obj_documento['firmantes'];
-        // $array2['DocumentoChis']['firmantes'] = $obj_documento_interno['firmantes'];
 
         ##By Jose Luis Moreno/ Creamos nuevo array para ordenar el xml
-        if(isset($obj_documento['anexos'])){
-            $ArrayXml = [
-                "emisor" => $obj_documento['emisor'],
-                "archivo" => $obj_documento['archivo'],
-                "anexos" => $obj_documento['anexos'],
-                "firmantes" => $obj_documento['firmantes'],
-            ];
-            $obj_documento = $ArrayXml;
+        $ArrayXml['emisor'] = $obj_documento['emisor'];
+
+        if(isset($obj_documento['receptores'])){
+            $ArrayXml['receptores'] = $obj_documento['receptores'];
         }
+
+        $ArrayXml["archivo"] = $obj_documento['archivo'];
+
+        if(isset($obj_documento['anexos'])){
+            $ArrayXml["anexos"] = $obj_documento['anexos'];
+        }
+
+        $ArrayXml["firmantes"] = $obj_documento['firmantes'];
+
+        $obj_documento = $ArrayXml;
 
         $result = ArrayToXml::convert($obj_documento, [
             'rootElementName' => 'DocumentoChis',
@@ -165,19 +160,6 @@ class FirmaController extends Controller {
                 'xmlns' => 'http://firmaelectronica.chiapas.gob.mx/GCD/DoctoGCD',
             ],
         ]);
-
-        // $result2 = ArrayToXml::convert($obj_documento_interno, [
-        //     'rootElementName' => 'DocumentoChis',
-        //     '_attributes' => [
-        //         'version' => $array2['DocumentoChis']['_attributes']['version'],
-        //         'fecha_creacion' => $array2['DocumentoChis']['_attributes']['fecha_creacion'],
-        //         'no_oficio' => $array2['DocumentoChis']['_attributes']['no_oficio'],
-        //         'dependencia_origen' => $array2['DocumentoChis']['_attributes']['dependencia_origen'],
-        //         'asunto_docto' => $array2['DocumentoChis']['_attributes']['asunto_docto'],
-        //         'tipo_docto' => $array2['DocumentoChis']['_attributes']['tipo_docto'],
-        //         'xmlns' => 'http://firmaelectronica.chiapas.gob.mx/GCD/DoctoGCD',
-        //     ],
-        // ]);
 
         DocumentosFirmar::where('id', $request->idFile)
             ->update([
