@@ -8,13 +8,13 @@
         }
 
         @page {
-            margin: 190px 25px 170px 25px;
+            margin: 200px 25px 0px 25px;
         }
 
         header {
             position: fixed;
             left: 0px;
-            top: -170px;
+            top: -185px;
             right: 0px;
             text-align: center;
         }
@@ -72,11 +72,11 @@
         footer {
             position: fixed;
             left: 0px;
-            bottom: -170px;
+            bottom: -100px;
             height: 150px;
             width: 100%;
+            font-size: 10px;
         }
-
         footer .page:after {
             content: counter(page, sans-serif);
         }
@@ -106,13 +106,20 @@
             margin-left: 10px;
             margin-right: 60px;
         }
+        .page-break {
+            page-break-after: always;
+        }
+        .page-break-non {
+            page-break-after: avoid;
+        }
 
     </style>
 </head>
 
 <body>
-
-    <header>
+    {!! $header !!}
+    {!! $body !!}
+    {{-- <header>
         <img src="img/reportes/sep.png" alt='sep' width="12%"
             style='position:fixed; left:0; margin: -170px 0 0 20px;' />
         <h6>SUBSECRETAR&Iacute;A DE EDUCACI&Oacute;N E INVESTIGACI&Oacute;N TECNOL&Oacute;GICAS</h6>
@@ -135,35 +142,10 @@
             HORARIO: <span class="tab2"> {{ $curso->dia }} DE {{ $curso->hini }} A {{ $curso->hfin }}</span>
             CURP: &nbsp;&nbsp;{{ $curso->curp }}
         </div>
-    </header>
+    </header> --}}
 
-    {{-- <footer>
-        <table class="tablaf" width="100%">
-            <tbody>
-                <tr>
-                    <td width="10%">&nbsp; </td>
-                    <td width="25%">
-                        <br /><br /><br /><br /><br /><br />
-                        {{ $curso->nombre }}
-                        <hr width="280px" />
-                        NOMBRE Y FIRMA DEL INSTRUCTOR
-                        <br /><br /><br />
-                    </td>
-                    <td width="25%">&nbsp;</td>
-                    <td width="15%">
-                        <br /><br /><br /><br /><br /><br />
-                        <hr width="120px" />
-                        SELLO
-                        <br /><br /><br />
-                    </td>
-                    <td width="15%">&nbsp;</td>
-                </tr>
-            </tbody>
-        </table>
-    </footer> --}}
-    
-    <main>
-        <table class="tabla">
+    {{--<main>
+         <table class="tabla">
             <thead>
                 <tr>
                     <th width="15px" rowspan="2">N<br />U<br />M</th>
@@ -208,7 +190,7 @@
             <tfoot>
             </tfoot>
         </table>
-    </main>
+    </main> --}}
 </body>
 
 </html>

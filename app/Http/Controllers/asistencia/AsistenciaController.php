@@ -257,6 +257,8 @@ class AsistenciaController extends Controller
                 ->join('users as us', 'us.email','fun.correo')
                 ->where('org.nombre', 'LIKE', '%ACADEMICO%')
                 ->where('org.nombre', 'LIKE', '%'.$info->ubicacion.'%')
+                ->Where('fun.titular', true)
+                ->Where('fun.activo', 'true')
                 ->first();
 
 
@@ -298,6 +300,16 @@ class AsistenciaController extends Controller
                         'dependencia_emisor' => 'Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas'
                         // 'curp_emisor' => $dataEmisor->curp
                     ],
+                ],
+                'receptores' => [
+                    'receptor' => [
+                        '_attributes' => [
+                            'nombre_receptor' => $dataFirmante->funcionario,
+                            'cargo_receptor' => $dataFirmante->cargo,
+                            'dependencia_receptor' => 'Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas',
+                            'tipo_receptor' => 'JDP'
+                        ]
+                    ]
                 ],
                 'archivo' => [
                     '_attributes' => [
