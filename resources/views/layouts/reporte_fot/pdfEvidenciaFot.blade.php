@@ -94,11 +94,14 @@
 
 
 <body>
-    <header>
+    {!! $body['header'] !!}
+    {!! $body['footer'] !!}
+    {!! $body['body'] !!}
+    {{-- <header>
         <img src="img/instituto_oficial.png" alt="Logo Izquierdo" width="30%" style="position:fixed; left:0; top:0;" />
         <img src="img/chiapas.png" alt="Logo Derecho" width="25%" style="position:fixed; right:0; top:8px;" />
-    </header>
-    <footer>
+    </header> --}}
+    {{-- <footer>
         <div style="position: relative; top:-76%">
             <img style="position: absolute;" src="img/formatos/footer_vertical.jpeg" width="100%">
             @if ($cursopdf)
@@ -110,12 +113,12 @@
     <div style="margin-top: -13%; margin-bottom:-13px;">
         <h6 style="text-align: center;">{{isset($leyenda) ? $leyenda : ''}}</h6>
         <span style="text-align: center; width:auto; display:block;">REPORTE FOTOGRÁFICO DE INSTRUCTOR EXTERNO</span>
-    </div>
+    </div> --}}
     {{-- <div style="text-align: center;">
         <span style="text-align: center;">REPORTE FOTOGRÁFICO DEL INSTRUCTOR</span>
     </div> --}}
     {{-- Lugar --}}
-    <div style="text-align: right;">
+    {{-- <div style="text-align: right;">
         <p style="font-size: 14px; margin-bottom: 3px;">
         @if ($cursopdf->ubicacion != $cursopdf->unidad)
         UNIDAD DE CAPACITACIÓN {{$cursopdf->ubicacion}}, CENTRO DE TRABAJO ACCIÓN MÓVIL {{$cursopdf->unidad}}.
@@ -125,7 +128,7 @@
         </p>
         <p style="font-size: 14px; margin-top: 3px;">{{mb_strtoupper($cursopdf->municipio, 'UTF-8')}}, CHIAPAS. A {{$fecha_gen}}.</p>
     </div>
-    {{-- tabla --}}
+    {{-- tabla --
     @if ($cursopdf)
         <table border="1" class="" width="100%">
             <tbody>
@@ -148,7 +151,7 @@
                     <td><b>NOMBRE DEL INSTRUCTOR: </b>{{$cursopdf->nombre}}</td>
                 </tr>
             </tbody>
-        </table>
+        </table> --}}
         <br>
         {{-- Mostrar imagenes --}}
         @if (count($base64Images) > 0)
@@ -169,7 +172,7 @@
             </div>
         @endif
 
-    @endif
+    {{-- @endif --}}
 </body>
 
 </html>
