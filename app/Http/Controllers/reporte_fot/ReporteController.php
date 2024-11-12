@@ -90,7 +90,7 @@ class ReporteController extends Controller
             $unidad = DB::connection('pgsql')->table('tbl_unidades')->select('dunidad')
             ->where('unidad', $curso->unidad)->first();
 
-            if ($curso->curp != Auth::user()->curp) {
+            if ($curso->curp == Auth::user()->curp) {
 
                 if ($curso->status_curso == "AUTORIZADO") {
                     $message = 'ok';
