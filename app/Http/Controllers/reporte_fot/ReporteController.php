@@ -633,13 +633,23 @@ class ReporteController extends Controller
         ->join('tbl_unidades as uni', 'uni.unidad', 'tbl_cursos.unidad')
         ->where('tbl_cursos.id', '=', $id_curso)->first();
 
+        $meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+
+        $fechaActual = Carbon::now();
+        $dia = $fechaActual->day;
+        $mes = $fechaActual->month;
+        $anio = $fechaActual->year;
+
+        $dia = ($dia) <= 9 ? '0'.$dia : $dia;
+        $fecha_gen = $dia.' DE '.$meses[$mes-1].' DE '.$anio;
+
         if (isset($cursopdf->evidencia_fotografica["fecha_envio"])) {
             $fechapdf = $cursopdf->evidencia_fotografica["fecha_envio"];
             $fechaCarbon = Carbon::createFromFormat('Y-m-d', $fechapdf);
             $dia = ($fechaCarbon->day) < 10 ? '0'.$fechaCarbon->day : $fechaCarbon->day;
             $fechapdf = $dia.' DE '.$meses[$fechaCarbon->month-1].' DE '.$fechaCarbon->year;
         }else{
-            $fechapdf = '';
+            $fechapdf = $fecha_gen;
         }
 
         $body['header'] = '<header>
@@ -726,16 +736,6 @@ class ReporteController extends Controller
         // }
 
         // ##Procesar fecha del envio de documento
-        // $meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
-
-        // $fechaActual = Carbon::now();
-        // $dia = $fechaActual->day;
-        // $mes = $fechaActual->month;
-        // $anio = $fechaActual->year;
-
-        // $dia = ($dia) <= 9 ? '0'.$dia : $dia;
-        // $fecha_gen = $dia.' DE '.$meses[$mes-1].' DE '.$anio;
-
 
         // $valid_accionmovil = ($curso->unidad != $curso->ubicacion) ? ', CENTRO DE TRABAJO ACCIÓN MÓVIL '.$curso->unidad : ' ';
 
