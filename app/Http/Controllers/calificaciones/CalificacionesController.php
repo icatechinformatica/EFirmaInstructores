@@ -109,7 +109,7 @@ class CalificacionesController extends Controller {
             $dataFirmante = DB::connection('pgsql')->Table('tbl_organismos AS org')
                 ->Select('fun.id as id_fun','org.id', 'fun.nombre AS funcionario','fun.curp', 'us.name',
                     'fun.cargo','fun.correo', 'us.puesto', 'fun.incapacidad')
-                ->join('tbl_funcionarios AS fun', 'fun.id','org.id')
+                ->join('tbl_funcionarios AS fun', 'fun.id_org','org.id')
                 ->join('users as us', 'us.email','fun.correo')
                 ->where('org.nombre', 'LIKE', '%ACADEMICO%')
                 ->where('org.nombre', 'LIKE', '%'.$info->ubicacion.'%')
