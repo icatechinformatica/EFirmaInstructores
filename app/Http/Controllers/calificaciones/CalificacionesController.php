@@ -107,23 +107,23 @@ class CalificacionesController extends Controller {
             $arrayFirmantes = [];
 
             $dataFirmante = DB::connection('pgsql')->Table('tbl_organismos AS org')
-                ->Select('fun.id as id_fun','org.id', 'fun.nombre AS funcionario','fun.curp', 'us.name',
-                    'fun.cargo','fun.correo', 'us.puesto', 'fun.incapacidad')
+                ->Select('fun.id as id_fun','org.id', 'fun.nombre AS funcionario','fun.curp',
+                    'fun.cargo','fun.correo', 'fun.incapacidad')
                 ->join('tbl_funcionarios AS fun', 'fun.id_org','org.id')
-                ->join('users as us', 'us.email','fun.correo')
+                // ->join('users as us', 'us.email','fun.correo')
                 ->where('org.nombre', 'LIKE', '%ACADEMICO%')
                 ->where('org.nombre', 'LIKE', '%'.$info->ubicacion.'%')
                 ->Where('fun.titular', true)
                 ->Where('fun.activo', 'true')
                 ->first();
 
-            if($dataFirmante->curp == null)
-            {
-                return redirect()->route('firma.inicio')->with('Danger', 'Error: La curp de un firmante no se encuentra');
+            if($dataFirmante == null){
+                return back()->with('danger', 'NO SE ENCONTRARON DATOS DEL FIRMANTE AL REALIZAR LA CONSULTA');
             }
 
-            if($dataFirmante == null){
-                return redirect()->route('firma.inicio')->with('danger', 'NO SE ENCONTRARON DATOS DEL FIRMANTE AL REALIZAR LA CONSULTA');
+            if($dataFirmante->curp == null)
+            {
+                return back()->with('Danger', 'Error: La curp de un firmante no se encuentra');
             }
             ##Incapacidad
             $val_inca = $this->valid_incapacidad($dataFirmante);
