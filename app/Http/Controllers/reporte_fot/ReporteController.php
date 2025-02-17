@@ -267,6 +267,8 @@ class ReporteController extends Controller
         ->join('tbl_unidades as uni', 'uni.unidad', 'tbl_cursos.unidad')
         ->where('clave', '=', $clave)->first();
 
+        $direccion = $cursopdf->direccion;
+
         $documento = DocumentosFirmar::where('numero_o_clave', $clave)
             ->WhereNotIn('status',['CANCELADO','CANCELADO ICTI'])
             ->Where('tipo_archivo','Reporte fotografico')
@@ -357,7 +359,7 @@ class ReporteController extends Controller
             }
         }
 
-        $pdf = PDF::loadView('layouts.reporte_fot.pdfEvidenciaFot', compact('body', 'base64Images', 'path_files'));
+        $pdf = PDF::loadView('layouts.reporte_fot.pdfEvidenciaFot', compact('body', 'base64Images', 'path_files','direccion'));
         $pdf->setPaper('Letter', 'portrait');
         $file = "REPORTE_FOTOGRAFICO$clave.PDF";
         return $pdf->stream($file);
