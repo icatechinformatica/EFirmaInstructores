@@ -428,6 +428,7 @@ class ReporteController extends Controller
             ]
         ];
         array_push($arrayFirmantes, $temp);
+        $firmante = ['nombre' => $dataFirmante->funcionario, 'curp'=> $dataFirmante->curp, 'cargo' => $dataFirmante->cargo];
 
         ## Anexos
         $anexos = [];
@@ -534,6 +535,7 @@ class ReporteController extends Controller
             if(is_null($dataInsert)) {
                 $dataInsert = new DocumentosFirmar();
             }
+            array_push($body, ['firmantes' => $firmante]);
             $dataInsert->obj_documento = json_encode($ArrayXml);
             $dataInsert->obj_documento_interno = json_encode($body);
             $dataInsert->status = 'EnFirma';
