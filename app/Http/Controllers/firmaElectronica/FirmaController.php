@@ -241,7 +241,8 @@ class FirmaController extends Controller {
         $M = $this->toMonth(date('m', $date));
         $Y = date("Y", $date);
 
-        $body_html = json_decode($documento->obj_documento_interno);
+        $body = json_decode($documento->obj_documento_interno);
+        $body_html = $body->body;
 
 
         if ($data->modinstructor == 'HONORARIOS') {
