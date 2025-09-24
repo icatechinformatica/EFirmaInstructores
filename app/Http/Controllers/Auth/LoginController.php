@@ -98,11 +98,11 @@ class LoginController extends Controller
 
      private function whatsapp_restablecer_usuario_msg($instructor, WhatsAppService $whatsapp)
     {
-        $plantilla = DB::Connection('pgsql')->Table('tbl_wsp_plantillas')->Where('nombre', 'restablecer_pwd_sivyc')->First();
+        $plantilla = DB::Connection('pgsql')->Table('tbl_wsp_plantillas')->Where('nombre', 'restablecer_pwd_instructor')->First();
 
         // Reemplazar variables en plantilla
         $mensaje = str_replace(
-            ['{{nombre}}', '{{correo}}', '{{pwd}}','\n'],
+            ['{{nombre}}', '{{usuario}}', '{{pwd}}','\n'],
             [$instructor['nombre'], $instructor['correo'], $instructor['pwd'],"\n"],
             $plantilla->plantilla
         );
