@@ -41,6 +41,15 @@
                                 @enderror
                             </div>
                         </div>
+                        @if ($errors->any())
+                            <div class="form-group row">
+                                <div class="col-md-8 offset-md-4">
+                                    <a href="#" data-toggle="modal" data-target="#resetPwdModal">
+                                        ¿Olvidaste tu contraseña?
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
 
                         <div class="form-group row">
                             <div class="col-md-6 offset-md-4">
@@ -73,4 +82,75 @@
         </div>
     </div>
 </div>
+<!-- Modal -->
+<div class="modal fade" id="resetPwdModal" tabindex="-1" aria-labelledby="resetPwdModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ route('reset.password.modal') }}">
+      @csrf
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="resetPwdModalLabel">Restablecer Contraseña</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="resetEmail" class="form-label">Correo electrónico</label>
+            <input type="email" class="form-control" id="resetEmail" name="email" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label for="resetTelefono" class="form-label">Número Telefonico</label>
+            <input type="number" class="form-control" id="resetTelefono" name="resetTelefono" required readonly>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Enviar enlace de restablecimiento</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
 @endsection
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var emailInput = document.getElementById('email');
+    var resetEmail = document.getElementById('resetEmail');
+    var resetTelefono = document.getElementById('resetTelefono');
+
+    // Autofill email in modal
+    if(emailInput && resetEmail) {
+        emailInput.addEventListener('input', function() {
+            resetEmail.value = emailInput.value;
+        });
+        resetEmail.value = emailInput.value;
+    }
+
+    // When modal opens, fetch telefono
+    $('#resetPwdModal').on('show.bs.modal', function () {
+        var email = resetEmail.value;
+        if(email) {
+            $.ajax({
+                url: '{{ route("get.telefono.by.email") }}',
+                type: 'POST',
+                data: {
+                    email: email,
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    resetTelefono.value = response.telefono || '';
+                    if (!resetTelefono.value) {
+                        resetTelefono.readOnly = false; // Enable if empty
+                    } else {
+                        resetTelefono.readOnly = true;  // Keep readonly if found
+                    }
+                },
+                error: function() {
+                    resetTelefono.value = '';
+                }
+            });
+        } else {
+            resetTelefono.value = '';
+        }
+    });
+});
+</script>
+
