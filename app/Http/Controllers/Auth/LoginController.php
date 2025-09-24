@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Models\User;
+use App\User;
 use Illuminate\Http\Request;
 use App\Services\WhatsAppService;
 use Illuminate\Support\HtmlString;
@@ -70,7 +70,7 @@ class LoginController extends Controller
             'email.exists' => 'El correo proporcionado para restablecer la contraseña es erróneo o el usuario no está activo.',
         ]);
 
-        $user = DB::Table('users')->where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->first();
 
         // Generate a new random password
         $newPassword = \Str::random(6);
@@ -85,7 +85,7 @@ class LoginController extends Controller
         ];
 
         $response = $this->whatsapp_restablecer_usuario_msg($infowhats, app(WhatsAppService::class));
-dd('salio');
+
         // Check for WhatsApp sending errors in the response
         if (isset($response['status']) && $response['status'] === false) {
             return back()->with('error', 'Error al enviar mensaje de WhatsApp: ' . ($response['message'] ?? 'Error desconocido'));
@@ -108,7 +108,6 @@ dd('salio');
         );
 
          $callback = $whatsapp->cola($instructor['telefono'], $mensaje, $plantilla->prueba);
-         dd('salio callbal');
 
         return $callback;
     }

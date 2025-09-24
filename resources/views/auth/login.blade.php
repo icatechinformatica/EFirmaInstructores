@@ -5,6 +5,20 @@
 
 @section('content')
 <div class="container">
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li><strong>{!! $error !!}</strong></li>
+                @endforeach
+            </ul>
+        </div> <br>
+    @endif
+    @if (session('success'))
+        <div class="alert alert-success">
+            <strong>{{ session('success') }}</strong>
+        </div>
+    @endif
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">

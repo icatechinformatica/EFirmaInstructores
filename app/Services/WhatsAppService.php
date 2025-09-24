@@ -26,7 +26,6 @@ class WhatsAppService
 
     public function cola($telefono, $mensaje, $prueba) {
         //verificar si es prueba
-        dd('entro');
         if($prueba) {
             $telefono = '9612255159';
         }
