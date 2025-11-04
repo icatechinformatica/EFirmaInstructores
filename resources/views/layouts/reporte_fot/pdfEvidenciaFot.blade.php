@@ -1,33 +1,38 @@
-<html>
-
-<head>
-    <title>REPORTE FOTOGRAFICO</title>
+@extends('layouts.theme.vlayout2025')
+@section('title', 'REPORTE FOTOGRAFICO | SIVyC Icatech')
+@section('content_script_css')
     <style>
-        body {
+        /* body {
             font-family: sans-serif;
-            /* margin: 35px 30px 40px 30px; */
-            margin-top: 20%;
-            /* margin-bottom: -40px; */
-        }
+            margin-top: 15%;
+            margin-bottom: 4%;
+        } */
 
-        @page {
-            margin: 35px 30px 40px 30px;
-        }
+        /* @page {
+            margin: 35px 30px 150px 30px;
+        } */
 
-        header {
+        /* header {
             position: fixed;
             left: 0px;
             top: -80px;
             right: 0px;
             text-align: center;
-        }
+        } */
 
-        header h6 {
+        /* header h6 {
             height: 0;
             line-height: 14px;
             padding: 8px;
             margin: 0;
-        }
+        } */
+
+        /* table #curso {
+            font-size: 8px;
+            padding: 10px;
+            line-height: 18px;
+            text-align: justify;
+        } */
 
         main {
             padding: 0;
@@ -45,25 +50,64 @@
             font-size: 8px;
             border: gray 1px solid;
             text-align: center;
-            padding: 3px;
+            /* padding: 3px; */
         }
 
-        footer {
+        .tab {
+            margin-left: 10px;
+            margin-right: 50px;
+        }
+
+        .tab1 {
+            margin-left: 15px;
+            margin-right: 50px;
+        }
+
+        .tab2 {
+            margin-left: 5px;
+            margin-right: 20px;
+        }
+
+        /* footer {
             position: fixed;
             left: 0px;
             bottom: -170px;
             height: 150px;
             width: 100%;
-        }
+        } */
 
         footer .page:after {
             content: counter(page, sans-serif);
         }
 
+        .tablaf {
+            border-collapse: collapse;
+            width: 100%;
+        }
 
+        .tablaf tr td {
+            font-size: 9px;
+            text-align: center;
+            padding: 3px;
+        }
+
+        .tab {
+            margin-left: 20px;
+            margin-right: 50px;
+        }
+
+        .tab1 {
+            margin-left: 10px;
+            margin-right: 20px;
+        }
+
+        .tab2 {
+            margin-left: 10px;
+            margin-right: 60px;
+        }
 
         /* by Jose Luis Moreno */
-        table {
+        .estilo_tabla {
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
@@ -71,13 +115,14 @@
             /* margin-top: 20px; */
         }
 
-        th, td {
+        .estilo_colum {
             border: 1px solid #ddd;
-            padding: 5px;
+            padding: 3px;
             /* text-align: left; */
             font-size: 12px;
         }
-        .direccion {
+
+        /* .direccion {
             top: 1.3cm;
             text-align: left;
             position: absolute;
@@ -87,68 +132,19 @@
             color:#FFF;
             font-weight: bold;
             line-height: 1;
-        }
+        } */
+
 
     </style>
-</head>
-
-
-<body>
-    <header>
+    @php $reporte_fotografico = true; @endphp
+@endsection
+@section('content')
+    {{-- <header>
         <img src="img/instituto_oficial.png" alt="Logo Izquierdo" width="30%" style="position:fixed; left:0; top:0;" />
-        <img src="img/chiapas.png" alt="Logo Derecho" width="25%" style="position:fixed; right:0; top:8px;" />
-    </header>
-    <footer>
-        <div style="position: relative; top:-76%">
-            <img style="position: absolute;" src="img/formatos/footer_vertical.jpeg" width="100%">
-            @if ($cursopdf)
-                @php $direccion = explode("*", $cursopdf->direccion);  @endphp
-                <p class='direccion'><b>@foreach($direccion as $point => $ari)@if($point != 0)<br> @endif {{$ari}}@endforeach</b></p>
-            @endif
-        </div>
-    </footer>
-    <div style="margin-top: -13%; margin-bottom:-13px;">
-        <h6 style="text-align: center;">{{isset($leyenda) ? $leyenda : ''}}</h6>
-        <span style="text-align: center; width:auto; display:block;">REPORTE FOTOGRÁFICO DE INSTRUCTOR EXTERNO</span>
-    </div>
-    {{-- <div style="text-align: center;">
-        <span style="text-align: center;">REPORTE FOTOGRÁFICO DEL INSTRUCTOR</span>
-    </div> --}}
-    {{-- Lugar --}}
-    <div style="text-align: right;">
-        <p style="font-size: 14px; margin-bottom: 3px;">
-        @if ($cursopdf->ubicacion != $cursopdf->unidad)
-        UNIDAD DE CAPACITACIÓN {{$cursopdf->ubicacion}}, CENTRO DE TRABAJO ACCIÓN MÓVIL {{$cursopdf->unidad}}.
-        @else
-        UNIDAD DE CAPACITACIÓN {{$cursopdf->ubicacion}}.
-        @endif
-        </p>
-        <p style="font-size: 14px; margin-top: 3px;">{{mb_strtoupper($cursopdf->municipio, 'UTF-8')}}, CHIAPAS. A {{$fecha_gen}}.</p>
-    </div>
-    {{-- tabla --}}
-    @if ($cursopdf)
-        <table border="1" class="" width="100%">
-            <tbody>
-                <tr>
-                    <td colspan="2"><b>CURSO: </b>{{$cursopdf->curso}}</td>
-                </tr>
-                <tr>
-                    <td colspan="2"><b>TIPO: </b>{{$cursopdf->tcapacitacion}}</td>
-                </tr>
-                <tr>
-                    <td><b>FECHA DE INICIO: </b>{{$cursopdf->inicio}}</td>
-                    <td><b>FECHA DE TERMINO: </b>{{$cursopdf->termino}}</td>
-                </tr>
-                <tr>
-                    <td><b>CLAVE: </b>{{$cursopdf->clave}}</td>
-                    <td><b>HORARIO: </b>{{$cursopdf->hini. ' A '. $cursopdf->hfin}}</td>
-                </tr>
-                <tr>
-                    <td><b>NOMBRE DEL TITULAR DE LA U.C: </b>{{$cursopdf->dunidad}}</td>
-                    <td><b>NOMBRE DEL INSTRUCTOR: </b>{{$cursopdf->nombre}}</td>
-                </tr>
-            </tbody>
-        </table>
+        <img src="img/chiapas.png" alt="Logo Derecho" width="25%" style="position:fixed; right:0; top:0;" />
+    </header> --}}
+    {{-- {!! $body['header'] !!} --}}
+    {!! $body['body'] !!}
         <br>
         {{-- Mostrar imagenes --}}
         @if (count($base64Images) > 0)
@@ -168,8 +164,5 @@
                 @endforeach
             </div>
         @endif
-
-    @endif
-</body>
-
-</html>
+@endsection
+@section('script_content_js')

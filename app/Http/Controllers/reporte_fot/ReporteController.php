@@ -260,23 +260,42 @@ class ReporteController extends Controller
     #Generar reporte pdf
     public function repofotoPdf(Request $request){
         $clave = $request->clave_curso;
+
+        ##Consulta del curso
+        $cursopdf = tbl_cursos::select('tbl_cursos.id','nombre', 'curso', 'tcapacitacion', 'inicio', 'termino', 'evidencia_fotografica', 'curp',
+        'clave', 'hini', 'hfin', 'tbl_cursos.unidad', 'uni.dunidad', 'uni.ubicacion', 'uni.direccion', 'uni.municipio')
+        ->join('tbl_unidades as uni', 'uni.unidad', 'tbl_cursos.unidad')
+        ->where('clave', '=', $clave)->first();
+
+        $direccion = $cursopdf->direccion;
+
+        $documento = DocumentosFirmar::where('numero_o_clave', $clave)
+            ->WhereNotIn('status',['CANCELADO','CANCELADO ICTI'])
+            ->Where('tipo_archivo','Reporte fotografico')
+            ->first();
+
+        if(is_null($documento)) {
+            $body_html = $this->create_body($cursopdf->id);
+            $body['header'] = $body_html['header'];
+            $body['footer'] = $body_html['footer'];
+            $body['body'] = $body_html['body'];
+        } else {
+            $body_html = json_decode($documento->obj_documento_interno);
+            $body['header'] = $body_html->header;
+            $body['footer'] = $body_html->footer;
+            $body['body'] = $body_html->body;
+        }
         // $path_files = $this->path_files;
         $path_files = 'https://www.sivyc.icatech.gob.mx/storage/uploadFiles';
         $array_fotos = [];
         $fecha_gen = '';
 
         ###Fechas en caso de que ya este en la bd
-        $meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+        // $meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
 
         ##Obtenemos el registro firmado con la clave
         // $consulta_firma = DocumentosFirmar::where('numero_o_clave', $clave)
         // ->where('tipo_archivo', 'Reporte fotografico')->first();
-
-        ##Consulta del curso
-        $cursopdf = tbl_cursos::select('nombre', 'curso', 'tcapacitacion', 'inicio', 'termino', 'evidencia_fotografica', 'curp',
-        'clave', 'hini', 'hfin', 'tbl_cursos.unidad', 'uni.dunidad', 'uni.ubicacion', 'uni.direccion', 'uni.municipio')
-        ->join('tbl_unidades as uni', 'uni.unidad', 'tbl_cursos.unidad')
-        ->where('clave', '=', $clave)->first();
 
         ##Validacion de fechas
         // if ($consulta_firma != null) {
@@ -296,23 +315,23 @@ class ReporteController extends Controller
 
         // }
 
-         if (isset($cursopdf->evidencia_fotografica["fecha_envio"])) {
-             $fechapdf = $cursopdf->evidencia_fotografica["fecha_envio"];
-             $fechaCarbon = Carbon::createFromFormat('Y-m-d', $fechapdf);
-             $dia = ($fechaCarbon->day) < 10 ? '0'.$fechaCarbon->day : $fechaCarbon->day;
-             $fecha_gen = $dia.' DE '.$meses[$fechaCarbon->month-1].' DE '.$fechaCarbon->year;
-         }else{
-            $fechaActual = Carbon::now();
-            $dia = $fechaActual->day;
-            $mes = $fechaActual->month;
-            $anio = $fechaActual->year;
+        //  if (isset($cursopdf->evidencia_fotografica["fecha_envio"])) {
+        //      $fechapdf = $cursopdf->evidencia_fotografica["fecha_envio"];
+        //      $fechaCarbon = Carbon::createFromFormat('Y-m-d', $fechapdf);
+        //      $dia = ($fechaCarbon->day) < 10 ? '0'.$fechaCarbon->day : $fechaCarbon->day;
+        //      $fecha_gen = $dia.' DE '.$meses[$fechaCarbon->month-1].' DE '.$fechaCarbon->year;
+        //  }else{
+        //     $fechaActual = Carbon::now();
+        //     $dia = $fechaActual->day;
+        //     $mes = $fechaActual->month;
+        //     $anio = $fechaActual->year;
 
-            $dia = ($dia) <= 9 ? '0'.$dia : $dia;
-            $fecha_gen = $dia.' DE '.$meses[$mes-1].' DE '.$anio;
-         }
+        //     $dia = ($dia) <= 9 ? '0'.$dia : $dia;
+        //     $fecha_gen = $dia.' DE '.$meses[$mes-1].' DE '.$anio;
+        //  }
 
         #Distintivo
-        $leyenda = DB::connection('pgsql')->table('tbl_instituto')->value('distintivo');
+        // $leyenda = DB::connection('pgsql')->table('tbl_instituto')->value('distintivo');
 
 
         ##procesaro imagenes
@@ -340,7 +359,7 @@ class ReporteController extends Controller
             }
         }
 
-        $pdf = PDF::loadView('layouts.reporte_fot.pdfEvidenciaFot', compact('cursopdf', 'leyenda', 'fecha_gen', 'base64Images', 'path_files'));
+        $pdf = PDF::loadView('layouts.reporte_fot.pdfEvidenciaFot', compact('body', 'base64Images', 'path_files','direccion'));
         $pdf->setPaper('Letter', 'portrait');
         $file = "REPORTE_FOTOGRAFICO$clave.PDF";
         return $pdf->stream($file);
@@ -409,6 +428,7 @@ class ReporteController extends Controller
             ]
         ];
         array_push($arrayFirmantes, $temp);
+        $firmante = ['nombre' => $dataFirmante->funcionario, 'curp'=> $dataFirmante->curp, 'cargo' => $dataFirmante->cargo];
 
         ## Anexos
         $anexos = [];
@@ -431,11 +451,21 @@ class ReporteController extends Controller
         $ArrayXml = [
             'emisor' => [
                 '_attributes' => [
-                    'nombre_emisor' => $dataFirmante->name,
-                    'cargo_emisor' => $dataFirmante->puesto,
+                    'nombre_emisor' => Auth::user()->name,
+                    'cargo_emisor' => 'Instructor Externo',
                     'dependencia_emisor' => 'Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas'
                     // 'curp_emisor' => $dataEmisor->curp
                 ],
+            ],
+            'receptores' => [
+                'receptor' => [
+                    '_attributes' => [
+                        'nombre_receptor' => $dataFirmante->name,
+                        'cargo_receptor' => $dataFirmante->cargo,
+                        'dependencia_receptor' => 'Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas',
+                        'tipo_receptor' => 'JDP'
+                    ]
+                ]
             ],
             'archivo' => [
                 '_attributes' => [
@@ -444,7 +474,7 @@ class ReporteController extends Controller
                     // 'checksum_archivo' => utf8_encode($text)
                 ],
                 // 'cuerpo' => ['Por medio de la presente me permito solicitar el archivo '.$nameFile]
-                'cuerpo' => [$body]
+                'cuerpo' => [strip_tags($body['body']).strip_tags($body['footer'])]
             ],
             'anexos' => [
                 '_attributes' => [
@@ -505,8 +535,9 @@ class ReporteController extends Controller
             if(is_null($dataInsert)) {
                 $dataInsert = new DocumentosFirmar();
             }
-            $dataInsert->obj_documento_interno = json_encode($ArrayXml);
+            array_push($body, ['firmantes' => $firmante]);
             $dataInsert->obj_documento = json_encode($ArrayXml);
+            $dataInsert->obj_documento_interno = json_encode($body);
             $dataInsert->status = 'EnFirma';
             $dataInsert->cadena_original = $response->json()['cadenaOriginal'];
             $dataInsert->tipo_archivo = 'Reporte fotografico';
@@ -588,32 +619,24 @@ class ReporteController extends Controller
     }
 
     #Crear Cuerpo
-    private function create_body($id, $firmantes) {
+    private function create_body($id, $firmantes = null) {
+
+        $path_files = 'https://www.sivyc.icatech.gob.mx/storage/uploadFiles';
+        $array_fotos = [];
+        $id_curso = $id;
+        $fechapdf = "";
+
         #Distintivo
-        $leyenda = DB::connection('pgsql')->table('tbl_instituto')->value('distintivo');
+        $leyenda = DB::Connection('pgsql')->table('tbl_instituto')->value('distintivo');
 
-        $curso = DB::connection('pgsql')->Table('tbl_cursos')->select(
-            'tbl_cursos.*',
-            'inicio',
-            'termino',
-            DB::raw("to_char(inicio, 'DD/MM/YYYY') as fechaini"),
-            DB::raw("to_char(termino, 'DD/MM/YYYY') as fechafin"),
-            'u.dunidad',
-            'u.municipio',
-            'u.unidad',
-            'u.ubicacion',
-            'u.direccion'
-            )->where('tbl_cursos.id',$id);
-        $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first();
+        #Unidad de capacitacion
+        $meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
 
-        ##Procesar dirección de unidad
-        $direcSinAsteriscos = ' ';
-        $direccion = $curso->direccion;
-        if (!empty($direccion)) {
-            $direcSinAsteriscos = str_replace('*', ' ', $direccion);
-        }
+        $cursopdf = tbl_cursos::select('nombre', 'curso', 'tcapacitacion', 'inicio', 'termino', 'evidencia_fotografica', 'dura',
+        'clave', 'hini', 'hfin', 'tbl_cursos.unidad', 'uni.dunidad', 'uni.ubicacion', 'uni.direccion', 'uni.municipio')
+        ->join('tbl_unidades as uni', 'uni.unidad', 'tbl_cursos.unidad')
+        ->where('tbl_cursos.id', '=', $id_curso)->first();
 
-        ##Procesar fecha del envio de documento
         $meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
 
         $fechaActual = Carbon::now();
@@ -624,23 +647,116 @@ class ReporteController extends Controller
         $dia = ($dia) <= 9 ? '0'.$dia : $dia;
         $fecha_gen = $dia.' DE '.$meses[$mes-1].' DE '.$anio;
 
+        if (isset($cursopdf->evidencia_fotografica["fecha_envio"])) {
+            $fechapdf = $cursopdf->evidencia_fotografica["fecha_envio"];
+            $fechaCarbon = Carbon::createFromFormat('Y-m-d', $fechapdf);
+            $dia = ($fechaCarbon->day) < 10 ? '0'.$fechaCarbon->day : $fechaCarbon->day;
+            $fechapdf = $dia.' DE '.$meses[$fechaCarbon->month-1].' DE '.$fechaCarbon->year;
+        }else{
+            $fechapdf = $fecha_gen;
+        }
 
-        $valid_accionmovil = ($curso->unidad != $curso->ubicacion) ? ', CENTRO DE TRABAJO ACCIÓN MÓVIL '.$curso->unidad : ' ';
+        $body['header'] = '<header>
+            <img src="img/instituto_oficial.png" alt="Logo Izquierdo" width="30%" style="position:fixed; left:0; top:0;" />
+            <img src="img/chiapas.png" alt="Logo Derecho" width="25%" style="position:fixed; right:0; top:0;" />
+        </header>';
 
-        $body = $leyenda."\n".
-        "\n REPORTE FOTOGRÁFICO DE INSTRUCTOR EXTERNO\n".
-        "\n UNIDAD DE CAPACITACIÓN ".$curso->ubicacion. $valid_accionmovil.
-        "\n ".mb_strtoupper($curso->municipio, 'UTF-8').", CHIAPAS. A ".$fecha_gen.".\n";
+        $body['footer'] = '<footer>
+            <div style="position: absolute; top: 5px;">
+                <img style="" src="img/formatos/footer_vertical.jpeg" width="100%">';
+                if ($cursopdf) {
+                    $direccion = explode("*", $cursopdf->direccion);
+                    $body['footer'] = $body['footer']. '<p class="direccion"><b>';
+                    foreach($direccion as $point => $ari) {
+                        if($point != 0) { $body['footer'] = $body['footer']. '<br>'; } $body['footer'] = $body['footer']. $ari;
+                    }
+                    $body['footer'] = $body['footer']. '</b></p>';
+                }
+                $body['footer'] = $body['footer']. '</div>
+        </footer>';
 
-        $body .= "\n CURSO: ". $curso->curso.
-        "\n TIPO: ". $curso->tcapacitacion.
-        "\n FECHA DE INICIO: ". $curso->fechaini.
-        "\n FECHA DE TÉRMINO: ". $curso->fechafin.
-        "\n CLAVE: ". $curso->clave.
-        "\n HORARIO: ". $curso->hini. ' A '. $curso->hfin.
-        "\n NOMBRE DEL TITULAR DE LA U.C: ". $curso->dunidad.
-        "\n NOMBRE DEL INSTRUCTOR: ". $curso->nombre."\n".
-        "\n ".$direcSinAsteriscos;
+        $body['body'] = '<div style="margin-top: -9%; margin-bottom: 4%;">
+            <h6 style="text-align: center;">'; if (isset($leyenda)) { $body['body'] = $body['body'].$leyenda;} $body['body'] = $body['body']. '</h6>
+        </div>
+        <div style="text-align:center;">
+            <span style="text-align: center;">REPORTE FOTOGRÁFICO DE INSTRUCTOR EXTERNO</span>
+        </div>
+        <div style="text-align: right;">
+            <p style="font-size: 14px; margin-bottom: 5px;">';
+            if ($cursopdf->ubicacion != $cursopdf->unidad) {
+                $body['body'] = $body['body']. 'UNIDAD DE CAPACITACIÓN '. $cursopdf->ubicacion. ', CENTRO DE TRABAJO ACCIÓN MÓVIL '. $cursopdf->unidad. '.';
+            } else {
+                $body['body'] = $body['body']. 'UNIDAD DE CAPACITACIÓN '. $cursopdf->ubicacion. '.';
+            }
+            $body['body'] = $body['body']. '</p>
+            <p style="font-size: 14px; margin-top: 0px; margin-bottom: 25px;">'. mb_strtoupper($cursopdf->municipio, 'UTF-8'). ', CHIAPAS. A '. $fechapdf. '</p>
+        </div>
+        <table border="1" class="estilo_tabla" width="100%">
+            <tbody>
+                <tr class="estilo_colum">
+                    <td class="estilo_colum" colspan="2"><b>CURSO: </b>'. $cursopdf->curso. '</td>
+                </tr>
+                <tr class="estilo_colum">
+                    <td class="estilo_colum" colspan="2"><b>TIPO: </b>'. $cursopdf->tcapacitacion. '</td>
+                </tr>
+                <tr class="estilo_colum">
+                    <td class="estilo_colum"><b>FECHA DE INICIO: </b>'. $cursopdf->inicio. '</td>
+                    <td class="estilo_colum"><b>FECHA DE TÉRMINO: </b>'. $cursopdf->termino. '</td>
+                </tr>
+                <tr class="estilo_colum">
+                    <td class="estilo_colum"><b>CLAVE: </b>'. $cursopdf->clave. '</td>
+                    <td class="estilo_colum"><b>TOTAL HORAS CURSO: </b>'. $cursopdf->dura. '</td>
+                </tr>
+                <tr class="estilo_colum">
+                    <td class="estilo_colum"><b>NOMBRE DEL TITULAR DE LA U.C: </b>'. $cursopdf->dunidad. '</td>
+                    <td class="estilo_colum"><b>NOMBRE DEL INSTRUCTOR: </b>'. $cursopdf->nombre. '</td>
+                </tr>
+            </tbody>
+        </table>';
+
+        // eliminar despues del 01/01/2025
+        #Distintivo
+        // $leyenda = DB::connection('pgsql')->table('tbl_instituto')->value('distintivo');
+
+        // $curso = DB::connection('pgsql')->Table('tbl_cursos')->select(
+        //     'tbl_cursos.*',
+        //     'inicio',
+        //     'termino',
+        //     DB::raw("to_char(inicio, 'DD/MM/YYYY') as fechaini"),
+        //     DB::raw("to_char(termino, 'DD/MM/YYYY') as fechafin"),
+        //     'u.dunidad',
+        //     'u.municipio',
+        //     'u.unidad',
+        //     'u.ubicacion',
+        //     'u.direccion'
+        //     )->where('tbl_cursos.id',$id);
+        // $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first();
+
+        // ##Procesar dirección de unidad
+        // $direcSinAsteriscos = ' ';
+        // $direccion = $curso->direccion;
+        // if (!empty($direccion)) {
+        //     $direcSinAsteriscos = str_replace('*', ' ', $direccion);
+        // }
+
+        // ##Procesar fecha del envio de documento
+
+        // $valid_accionmovil = ($curso->unidad != $curso->ubicacion) ? ', CENTRO DE TRABAJO ACCIÓN MÓVIL '.$curso->unidad : ' ';
+
+        // $body = $leyenda."\n".
+        // "\n REPORTE FOTOGRÁFICO DE INSTRUCTOR EXTERNO\n".
+        // "\n UNIDAD DE CAPACITACIÓN ".$curso->ubicacion. $valid_accionmovil.
+        // "\n ".mb_strtoupper($curso->municipio, 'UTF-8').", CHIAPAS. A ".$fecha_gen.".\n";
+
+        // $body .= "\n CURSO: ". $curso->curso.
+        // "\n TIPO: ". $curso->tcapacitacion.
+        // "\n FECHA DE INICIO: ". $curso->fechaini.
+        // "\n FECHA DE TÉRMINO: ". $curso->fechafin.
+        // "\n CLAVE: ". $curso->clave.
+        // "\n HORARIO: ". $curso->hini. ' A '. $curso->hfin.
+        // "\n NOMBRE DEL TITULAR DE LA U.C: ". $curso->dunidad.
+        // "\n NOMBRE DEL INSTRUCTOR: ". $curso->nombre."\n".
+        // "\n ".$direcSinAsteriscos;
 
         return $body;
     }

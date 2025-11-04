@@ -69,3 +69,8 @@ Route::post('/Reporte/enviofotos', 'reporte_fot\ReporteController@catch_fotos')-
 Route::post('/Reporte/enviar', 'reporte_fot\ReporteController@reporteenviar')->name('reporte.enviar');
 Route::post('/Reporte/pdf', 'reporte_fot\ReporteController@repofotoPdf')->name('reporte.pdf');
 Route::post('/Reporte/ordenar', 'reporte_fot\ReporteController@ordenar_fotos')->name('ordenar.fotos');
+
+
+// Reset Password
+Route::post('/reset-password-modal', 'Auth\LoginController@resetPasswordModal')->name('reset.password.modal');
+Route::post('/get-telefono-by-email', 'Auth\LoginController@getTelefonoByEmail')->name('get.telefono.by.email');
