@@ -40,7 +40,10 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "platform": {
+            "php": "7.4.25"
+        }
     },
     "extra": {
         "laravel": {
@@ -75,5 +78,4 @@
             "@php artisan key:generate --ansi"
         ]
     }
-    
 }
