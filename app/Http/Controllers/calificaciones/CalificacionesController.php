@@ -18,20 +18,27 @@ use Carbon\Carbon;
 use DateInterval;
 use DateTime;
 use PDF;
-class CalificacionesController extends Controller {
+use App\tbl_inscripcion;
+use App\Services\CalificacionValidationService;
 
-    function __construct() {
+
+class CalificacionesController extends Controller
+{
+
+    function __construct()
+    {
         session_start();
     }
 
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
         $message = NULL;
         $procesoPago = FALSE;
-        if(session('message')) $message = session('message');
+        if (session('message')) $message = session('message');
 
         $clave = $request->clave;
-        if($clave == null) {
-            if(session('clave')) $clave = session('clave');
+        if ($clave == null) {
+            if (session('clave')) $clave = session('clave');
         }
         $curso = tbl_cursos::where('clave', '=', $clave)->first();
 
@@ -46,7 +53,7 @@ class CalificacionesController extends Controller {
                 $fecha_valida =  strtotime($fecha_hoy) - strtotime($curso->termino);
 
                 if ($curso->status_curso == "AUTORIZADO") {
-                    $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select('i.id', 'i.matricula', 'i.alumno', 'i.calificacion','i.porcentaje_asis', 'f.folio')
+                    $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select('i.id', 'i.matricula', 'i.alumno', 'i.calificacion', 'i.porcentaje_asis', 'f.folio')
                         ->leftJoin('tbl_folios as f', function ($join) {
                             $join->on('f.id', '=', 'i.id_folio');
                         })
@@ -55,74 +62,102 @@ class CalificacionesController extends Controller {
                     if ($fecha_valida < 0) $message = "No prodece el registro de calificaciones, la fecha de termino del curso es el $curso->termino.";
                 } else $message = "El Curso fué $curso->status.";
 
-                if(count($alumnos)==0 AND !$message) $message = "El curso no tiene alumnos registrados. ";
+                if (count($alumnos) == 0 and !$message) $message = "El curso no tiene alumnos registrados. ";
                 else $_SESSION['id_curso'] = $curso->id;
 
-                $pagos=DB::Connection('pgsql')->Table('pagos')->Where('id_curso',$curso->id)->Value('status_recepcion');
-                if($curso->tipo_curso == 'CERTIFICACION' && $pagos != NULL && in_array($pagos, ['VALIDADO', 'En Espera'])) {
+                $pagos = DB::Connection('pgsql')->Table('pagos')->Where('id_curso', $curso->id)->Value('status_recepcion');
+                if ($curso->tipo_curso == 'CERTIFICACION' && $pagos != NULL && in_array($pagos, ['VALIDADO', 'En Espera'])) {
                     $procesoPago = TRUE;
                 }
             } else {
                 $denegado = 'denegado';
             }
-        }// else $message = "Clave inválida.";
+        } // else $message = "Clave inválida.";
 
-        return view('layouts.calificaciones.agregarCalificaciones', compact('clave', 'curso', 'alumnos', 'message', 'fecha_valida', 'denegado','procesoPago'));
+        return view('layouts.calificaciones.agregarCalificaciones', compact('clave', 'curso', 'alumnos', 'message', 'fecha_valida', 'denegado', 'procesoPago'));
     }
 
-    public function update(Request $request) {
+    public function update(Request $request)
+    {
         $id_curso = $_SESSION['id_curso'];
         $clave = $request->clave;
-        if($request->calificacion ){
-            foreach($request->calificacion as $key=>$val){
-                if(!is_numeric($val) OR $val<6 )  $val = "NP";
+        if ($request->calificacion) {
+            foreach ($request->calificacion as $key => $val) {
+                // if (!is_numeric($val) or $val < 6)  $val = "NP";
+                if ((!is_numeric($val) or $val < 6) && $val != 0) {
+                    $val = "NP";
+                }
                 $result = DB::connection('pgsql')
                     ->table('tbl_inscripcion')
-                    ->where('id_curso',$id_curso)
+                    ->where('id_curso', $id_curso)
                     ->where('id', $key)
-                    ->update(['calificacion' => $val,'iduser_updated'=>Auth::user()->id]);
+                    ->update(['calificacion' => $val, 'iduser_updated' => Auth::user()->id]);
             }
-            if($result) $message = "Calificaciones guardadas exitosamente!";
-        }else $message = "No existen cambios que guardar.";
+            if ($result) $message = "Calificaciones guardadas exitosamente!";
+        } else $message = "No existen cambios que guardar.";
 
-        return redirect('/Calificaciones/inicio')->with(['message'=>$message, 'clave'=>$clave]);
+        return redirect('/Calificaciones/inicio')->with(['message' => $message, 'clave' => $clave]);
     }
 
-    public function calificacionEnviar(Request $request) {
+    public function calificacionEnviar(Request $request)
+    {
         $clave = $request->clave3;
-        if($clave) {
+
+        //Ejecutar validacion de calificacion de alumnos para seguir con todo el proceso
+        if ($clave) {
+            // Validar calificaciones antes de enviar
+            $validationService = new CalificacionValidationService();
+            $validacion = $validationService->validarCalificacionesParaEnvio($clave);
+
+            // Si hay errores de validación, regresar con los mensajes
+            if (!$validacion['valido']) {
+                return redirect()
+                    ->route('calificaciones.inicio')
+                    ->with([
+                        'clave' => $clave,
+                        'errores' => $validacion['errores'],
+                        'message' => 'No se puede enviar la lista de calificaciones. Se encontraron ' . $validacion['alumnos_con_error'] . ' alumno(s) con calificación aprobatoria pero asistencia insuficiente.'
+                    ]);
+            }
+
             //inicio generacion de cadena unica
-            $info = DB::Connection('pgsql')->Table('tbl_cursos')->Select('tbl_unidades.*','tbl_cursos.clave','tbl_cursos.nombre','tbl_cursos.curp','instructores.correo')
-                ->Join('tbl_unidades','tbl_unidades.unidad','tbl_cursos.unidad')
-                ->join('instructores','instructores.id','tbl_cursos.id_instructor')
-                ->Where('tbl_cursos.clave',$clave)
+            $info = DB::Connection('pgsql')->Table('tbl_cursos')->Select('tbl_unidades.*', 'tbl_cursos.clave', 'tbl_cursos.nombre', 'tbl_cursos.curp', 'instructores.correo')
+                ->Join('tbl_unidades', 'tbl_unidades.unidad', 'tbl_cursos.unidad')
+                ->join('instructores', 'instructores.id', 'tbl_cursos.id_instructor')
+                ->Where('tbl_cursos.clave', $clave)
                 ->First();
 
-            $body = $this->create_body($clave,$info); //creacion de body
+            $body = $this->create_body($clave, $info); //creacion de body
 
-            $nameFileOriginal = 'Lista de calificaciones '.$info->clave.'.pdf';
-            $numOficio = 'RESD-05-'.$info->clave;
+            $nameFileOriginal = 'Lista de calificaciones ' . $info->clave . '.pdf';
+            $numOficio = 'RESD-05-' . $info->clave;
             $numFirmantes = '2';
 
             $arrayFirmantes = [];
 
             $dataFirmante = DB::connection('pgsql')->Table('tbl_organismos AS org')
-                ->Select('fun.id as id_fun','org.id', 'fun.nombre AS funcionario','fun.curp',
-                    'fun.cargo','fun.correo', 'fun.incapacidad')
-                ->join('tbl_funcionarios AS fun', 'fun.id_org','org.id')
+                ->Select(
+                    'fun.id as id_fun',
+                    'org.id',
+                    'fun.nombre AS funcionario',
+                    'fun.curp',
+                    'fun.cargo',
+                    'fun.correo',
+                    'fun.incapacidad'
+                )
+                ->join('tbl_funcionarios AS fun', 'fun.id_org', 'org.id')
                 // ->join('users as us', 'us.email','fun.correo')
                 ->where('org.nombre', 'LIKE', '%ACADEMICO%')
-                ->where('org.nombre', 'LIKE', '%'.$info->ubicacion.'%')
+                ->where('org.nombre', 'LIKE', '%' . $info->ubicacion . '%')
                 ->Where('fun.titular', true)
                 ->Where('fun.activo', 'true')
                 ->first();
 
-            if($dataFirmante == null){
+            if ($dataFirmante == null) {
                 return back()->with('danger', 'NO SE ENCONTRARON DATOS DEL FIRMANTE AL REALIZAR LA CONSULTA');
             }
 
-            if($dataFirmante->curp == null)
-            {
+            if ($dataFirmante->curp == null) {
                 return back()->with('Danger', 'Error: La curp de un firmante no se encuentra');
             }
             ##Incapacidad
@@ -132,17 +167,19 @@ class CalificacionesController extends Controller {
             }
 
             //Llenado de funcionarios firmantes
-            $temp = ['_attributes' =>
-            [
-                'curp_firmante' => $info->curp,
-                'nombre_firmante' => $info->nombre,
-                'email_firmante' => $info->correo,
-                'tipo_firmante' => 'FM'
-            ]
+            $temp = [
+                '_attributes' =>
+                [
+                    'curp_firmante' => $info->curp,
+                    'nombre_firmante' => $info->nombre,
+                    'email_firmante' => $info->correo,
+                    'tipo_firmante' => 'FM'
+                ]
             ];
             array_push($arrayFirmantes, $temp);
 
-            $temp = ['_attributes' =>
+            $temp = [
+                '_attributes' =>
                 [
                     'curp_firmante' => $dataFirmante->curp,
                     'nombre_firmante' => $dataFirmante->funcionario,
@@ -193,12 +230,12 @@ class CalificacionesController extends Controller {
 
             //Creacion de estampa de hora exacta de creacion
             $date = Carbon::now();
-            $month = $date->month < 10 ? '0'.$date->month : $date->month;
-            $day = $date->day < 10 ? '0'.$date->day : $date->day;
-            $hour = $date->hour < 10 ? '0'.$date->hour : $date->hour;
-            $minute = $date->minute < 10 ? '0'.$date->minute : $date->minute;
-            $second = $date->second < 10 ? '0'.$date->second : $date->second;
-            $dateFormat = $date->year.'-'.$month.'-'.$day.'T'.$hour.':'.$minute.':'.$second;
+            $month = $date->month < 10 ? '0' . $date->month : $date->month;
+            $day = $date->day < 10 ? '0' . $date->day : $date->day;
+            $hour = $date->hour < 10 ? '0' . $date->hour : $date->hour;
+            $minute = $date->minute < 10 ? '0' . $date->minute : $date->minute;
+            $second = $date->second < 10 ? '0' . $date->second : $date->second;
+            $dateFormat = $date->year . '-' . $month . '-' . $day . 'T' . $hour . ':' . $minute . ':' . $second;
 
             $result = ArrayToXml::convert($ArrayXml, [
                 'rootElementName' => 'DocumentoChis',
@@ -221,7 +258,7 @@ class CalificacionesController extends Controller {
                     $token = $this->generarToken();
                     $response = $this->getCadenaOriginal($xmlBase64, $token);
                 }
-            } else {// no hay registros
+            } else { // no hay registros
 
                 $token = $this->generarToken();
                 $response = $this->getCadenaOriginal($xmlBase64, $token);
@@ -229,8 +266,8 @@ class CalificacionesController extends Controller {
 
             //Guardado de cadena unica
             if ($response->json()['cadenaOriginal'] != null) {
-                $dataInsert = DocumentosFirmar::Where('numero_o_clave',$info->clave)->Where('tipo_archivo','Lista de calificaciones')->First();
-                if(is_null($dataInsert)) {
+                $dataInsert = DocumentosFirmar::Where('numero_o_clave', $info->clave)->Where('tipo_archivo', 'Lista de calificaciones')->First();
+                if (is_null($dataInsert)) {
                     $dataInsert = new DocumentosFirmar();
                 }
                 $dataInsert->obj_documento = json_encode($ArrayXml);
@@ -256,9 +293,9 @@ class CalificacionesController extends Controller {
                 DB::raw("to_char(inicio, 'DD/MM/YYYY') as fechaini"),
                 DB::raw("to_char(termino, 'DD/MM/YYYY') as fechafin"),
                 'u.plantel'
-            )->where('clave',$clave);
-            $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first();
-            if($curso) {
+            )->where('clave', $clave);
+            $curso = $curso->leftjoin('tbl_unidades as u', 'u.unidad', 'tbl_cursos.unidad')->first();
+            if ($curso) {
                 tbl_cursos::where('id', $curso->id)->update(['calif_finalizado' => true]);
                 return redirect()->route('calificaciones.inicio')->with('success', 'CALIFICACIONES ENVIADAS EXITOSAMENTE!');
             } else return "Curso no v&aacute;lido para esta Unidad";
@@ -266,16 +303,17 @@ class CalificacionesController extends Controller {
         return "Clave no v&aacute;lida";
     }
 
-    public function calificaciones(Request $request) {
+    public function calificaciones(Request $request)
+    {
         $clave = $request->get('clavePDF');
-        if($clave) {
+        if ($clave) {
 
             $documento = DocumentosFirmar::where('numero_o_clave', $clave)
-                ->WhereNotIn('status',['CANCELADO','CANCELADO ICTI'])
-                ->Where('tipo_archivo','Lista de calificaciones')
+                ->WhereNotIn('status', ['CANCELADO', 'CANCELADO ICTI'])
+                ->Where('tipo_archivo', 'Lista de calificaciones')
                 ->first();
 
-            if(is_null($documento)) {
+            if (is_null($documento)) {
                 $body_html = $this->create_body($clave);
                 $header = $body_html['header'];
                 $body = $body_html['body'];
@@ -311,36 +349,37 @@ class CalificacionesController extends Controller {
             //         return "NO HAY ALUMNOS INSCRITOS";
             //         exit;
             //     }
-                $consec = 1;
-                $pdf = PDF::loadView('layouts.calificaciones.pdfCalificaciones', compact('header','body'));
-                $pdf->setPaper('Letter', 'landscape');
-                $file = "CALIFICACIONES_$clave.PDF";
-                return $pdf->stream($file);
+            $consec = 1;
+            $pdf = PDF::loadView('layouts.calificaciones.pdfCalificaciones', compact('header', 'body'));
+            $pdf->setPaper('Letter', 'landscape');
+            $file = "CALIFICACIONES_$clave.PDF";
+            return $pdf->stream($file);
             // } else return "Curso no v&aacute;lido para esta Unidad";
         }
         return "Clave no v&aacute;lida";
     }
 
-    private function create_body($clave, $firmantes = null) {
+    private function create_body($clave, $firmantes = null)
+    {
         $curso = DB::Connection('pgsql')->table('tbl_cursos')->select(
             'tbl_cursos.*',
             DB::raw('right(clave,4) as grupo'),
             DB::raw("to_char(inicio, 'DD/MM/YYYY') as fechaini"),
             DB::raw("to_char(termino, 'DD/MM/YYYY') as fechafin"),
             'u.plantel'
-        )->where('tbl_cursos.clave',$clave);
+        )->where('tbl_cursos.clave', $clave);
         // if($_SESSION['unidades']) $curso = $curso->whereIn('u.ubicacion',$_SESSION['unidades']);
-        $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first();
-        if($curso) {
+        $curso = $curso->leftjoin('tbl_unidades as u', 'u.unidad', 'tbl_cursos.unidad')->first();
+        if ($curso) {
             $consec_curso = $curso->id_curso;
             $fecha_termino = $curso->inicio;
             $alumnos = DB::Connection('pgsql')->table('tbl_inscripcion as i')->select(
-                    'i.matricula',
-                    'i.alumno',
-                    'i.calificacion'
-                )->where('i.id_curso',$curso->id)
-                ->where('i.status','INSCRITO')
-                ->groupby('i.matricula','i.alumno','i.calificacion')
+                'i.matricula',
+                'i.alumno',
+                'i.calificacion'
+            )->where('i.id_curso', $curso->id)
+                ->where('i.status', 'INSCRITO')
+                ->groupby('i.matricula', 'i.alumno', 'i.calificacion')
                 ->orderby('i.alumno')
                 ->get();
             $consec = 0;
@@ -352,18 +391,18 @@ class CalificacionesController extends Controller {
                 <h6>REGISTRO DE EVALUACIÓN POR SUBOBJETIVOS</h6>
                 <h6>(RESD-05)</h6>
                 <div id="curso">
-                    UNIDAD DE CAPACITACIÓN: <span class="tab">'. $curso->plantel. $curso->unidad. '</span>
-                    CLAVE CCT: <span class="tab">'. $curso->cct. '</span>
-                    AREA: <span class="tab">'. $curso->area. '</span>
-                    ESPECIALIDAD: &nbsp;&nbsp;'. $curso->espe. '<br />
-                    CURSO: <span class="tab1">'.  $curso->curso. '</span>
-                    CLAVE: <span class="tab1">'. $curso->clave. '</span>
-                    CICLO ESCOLAR: <span class="tab1">'. $curso->ciclo. '</span>
-                    FECHA INICIO: <span class="tab1">'. $curso->fechaini. '</span>
-                    FECHA TERMINO: &nbsp;&nbsp;'. $curso->fechafin. '<br />
-                    GRUPO: <span class="tab2">'. $curso->folio_grupo. '</span>
-                    HORARIO: '. $curso->dia. ' DE '. $curso->hini. ' A '. $curso->hfin. '&nbsp;&nbsp;&nbsp;
-                    CURP: &nbsp;&nbsp;'. $curso->curp. '&nbsp;&nbsp;&nbsp;
+                    UNIDAD DE CAPACITACIÓN: <span class="tab">' . $curso->plantel . $curso->unidad . '</span>
+                    CLAVE CCT: <span class="tab">' . $curso->cct . '</span>
+                    AREA: <span class="tab">' . $curso->area . '</span>
+                    ESPECIALIDAD: &nbsp;&nbsp;' . $curso->espe . '<br />
+                    CURSO: <span class="tab1">' .  $curso->curso . '</span>
+                    CLAVE: <span class="tab1">' . $curso->clave . '</span>
+                    CICLO ESCOLAR: <span class="tab1">' . $curso->ciclo . '</span>
+                    FECHA INICIO: <span class="tab1">' . $curso->fechaini . '</span>
+                    FECHA TERMINO: &nbsp;&nbsp;' . $curso->fechafin . '<br />
+                    GRUPO: <span class="tab2">' . $curso->folio_grupo . '</span>
+                    HORARIO: ' . $curso->dia . ' DE ' . $curso->hini . ' A ' . $curso->hfin . '&nbsp;&nbsp;&nbsp;
+                    CURP: &nbsp;&nbsp;' . $curso->curp . '&nbsp;&nbsp;&nbsp;
                 </div>
             </header>';
 
@@ -384,13 +423,13 @@ class CalificacionesController extends Controller {
                         </tr>
                     </thead>
                     <tbody>';
-                        $i = 16;
-                        foreach ($alumnos as $a) {
-                            $consec = $consec+1;
-                            $body['body'] = $body['body']. '<tr width="10 px;">
-                                <td>'. $consec. '</td>
-                                <td>'. $a->matricula. '</td>
-                                <td>'. $a->alumno. '</td>
+            $i = 16;
+            foreach ($alumnos as $a) {
+                $consec = $consec + 1;
+                $body['body'] = $body['body'] . '<tr width="10 px;">
+                                <td>' . $consec . '</td>
+                                <td>' . $a->matricula . '</td>
+                                <td>' . $a->alumno . '</td>
                                 <td></td>
                                 <td></td>
                                 <td></td>
@@ -408,15 +447,15 @@ class CalificacionesController extends Controller {
                                 <td></td>
                                 <td></td>
                                 <td></td>
-                                <td>'. $a->calificacion. '</td>
+                                <td>' . $a->calificacion . '</td>
                             </tr>';
-                            if($consec > $i && isset($alumnos[$consec]->alumno)) {
-                                $body['body'] = $body['body']. '</tbody>
+                if ($consec > $i && isset($alumnos[$consec]->alumno)) {
+                    $body['body'] = $body['body'] . '</tbody>
                                 </table>
                                 <br><br><br>
                                 <div class="page-break"></div>';
-                                $i = $i+15;
-                                $body['body'] = $body['body']. '<table class="tabla">
+                    $i = $i + 15;
+                    $body['body'] = $body['body'] . '<table class="tabla">
                                 <thead>
                                     <tr>
                                         <th width="15px" rowspan="2">N<br />U<br />M</th>
@@ -432,76 +471,88 @@ class CalificacionesController extends Controller {
                                     </tr>
                                 </thead>
                                     <tbody>';
-                            }
-                        }
-                    $body['body'] = $body['body']. '</tbody>
+                }
+            }
+            $body['body'] = $body['body'] . '</tbody>
                 </table>
             </main>';
 
             $consec = 1;
-            $body['xml'] = "SUBSECRETARÍA DE EDUCACIÓN E INVESTIGACIÓN TECNOLÓGICAS \n".
-            "DIRECCIÓN GENERAL DE CENTROS DE FORMACIÓN PARA EL TRABAJO \n".
-            "REGISTRO DE EVALUACIÓN POR SUBOBJETIVOS \n".
-            "(RESD-05) ".
-            "UNIDAD DE CAPACITACIÓN: ". $curso->plantel. ' '.   $curso->unidad. ' CLAVE CCT: '. $curso->cct. ' AREA: '. $curso->area. ' ESPECIALIDAD: '. $curso->espe.
-            "\n CURSO: ". $curso->curso. ' CLAVE: '. $curso->clave. ' CICLO ESCOLAR: '. $curso->ciclo. ' FECHA INICIO: '. $curso->fechaini. ' FECHA TERMINO: '. $curso->fechafin.
-            "\n GRUPO: ". $curso->grupo. ' HORARIO: '. $curso->dia. ' DE '. $curso->hini. ' A '. $curso->hfin. ' CURP: '. $curso->curp.
-            "\n NUM NúMERO DE CONTROL NOMBRE DEL ALUMNO PRIMER APELLIDO/SEGUNDO APELLIDO/NOMBRE(S) CLAVE DE CADA SUBOBJETIVO RESULTADO RESULTADO FINAL";
-                    foreach ($alumnos as $a) {
-                        $body['xml'] = $body['xml']. "\n". ($consec++). ' '. $a->matricula. ' '. $a->alumno. ' '. $a->calificacion;
-                    }
+            $body['xml'] = "SUBSECRETARÍA DE EDUCACIÓN E INVESTIGACIÓN TECNOLÓGICAS \n" .
+                "DIRECCIÓN GENERAL DE CENTROS DE FORMACIÓN PARA EL TRABAJO \n" .
+                "REGISTRO DE EVALUACIÓN POR SUBOBJETIVOS \n" .
+                "(RESD-05) " .
+                "UNIDAD DE CAPACITACIÓN: " . $curso->plantel . ' ' .   $curso->unidad . ' CLAVE CCT: ' . $curso->cct . ' AREA: ' . $curso->area . ' ESPECIALIDAD: ' . $curso->espe .
+                "\n CURSO: " . $curso->curso . ' CLAVE: ' . $curso->clave . ' CICLO ESCOLAR: ' . $curso->ciclo . ' FECHA INICIO: ' . $curso->fechaini . ' FECHA TERMINO: ' . $curso->fechafin .
+                "\n GRUPO: " . $curso->grupo . ' HORARIO: ' . $curso->dia . ' DE ' . $curso->hini . ' A ' . $curso->hfin . ' CURP: ' . $curso->curp .
+                "\n NUM NúMERO DE CONTROL NOMBRE DEL ALUMNO PRIMER APELLIDO/SEGUNDO APELLIDO/NOMBRE(S) CLAVE DE CADA SUBOBJETIVO RESULTADO RESULTADO FINAL";
+            foreach ($alumnos as $a) {
+                $body['xml'] = $body['xml'] . "\n" . ($consec++) . ' ' . $a->matricula . ' ' . $a->alumno . ' ' . $a->calificacion;
+            }
             return $body;
         } else return "Curso no válido para esta Unidad";
     }
 
     ### BY JOSE LUIS / VALIDACIÓN DE INCAPACIDAD
-    public function valid_incapacidad($dataFirmante){
+    public function valid_incapacidad($dataFirmante)
+    {
         $result = null;
         $status_campos = false;
-        if($dataFirmante->incapacidad != null){
+        if ($dataFirmante->incapacidad != null) {
             $dataArray = json_decode($dataFirmante->incapacidad, true);
 
             ##Validamos los campos json
-            if(isset($dataArray['fecha_inicio']) && isset($dataArray['fecha_termino'])
-            && isset($dataArray['id_firmante']) && isset($dataArray['historial'])){
+            if (
+                isset($dataArray['fecha_inicio']) && isset($dataArray['fecha_termino'])
+                && isset($dataArray['id_firmante']) && isset($dataArray['historial'])
+            ) {
 
-                if($dataArray['fecha_inicio'] != '' && $dataArray['fecha_termino'] != '' && $dataArray['id_firmante'] != ''){
+                if ($dataArray['fecha_inicio'] != '' && $dataArray['fecha_termino'] != '' && $dataArray['id_firmante'] != '') {
                     $fecha_ini = $dataArray['fecha_inicio'];
                     $fecha_fin = $dataArray['fecha_termino'];
                     $id_firmante = $dataArray['id_firmante'];
                     $historial = $dataArray['historial'];
                     $status_campos = true;
                 }
-            }else{
+            } else {
                 // return redirect()->route('firma.inicio')->with('Danger', 'LA ESTRUCTURA DEL JSON DE LA INCAPACIDAD NO ES VALIDA!');
             }
 
             ##Validar si esta vacio
-            if($status_campos == true){
+            if ($status_campos == true) {
                 ##Validar las fechas
                 $fechaActual = date("Y-m-d");
                 $fecha_nowObj = new DateTime($fechaActual);
                 $fecha_iniObj = new DateTime($fecha_ini);
                 $fecha_finObj = new DateTime($fecha_fin);
 
-                if($fecha_nowObj >= $fecha_iniObj && $fecha_nowObj <= $fecha_finObj){
+                if ($fecha_nowObj >= $fecha_iniObj && $fecha_nowObj <= $fecha_finObj) {
                     ###Realizamos la consulta del nuevo firmante
                     $dataIncapacidad = DB::Connection('pgsql')->Table('tbl_organismos AS org')
-                    ->Select('org.id', 'fun.nombre AS funcionario','fun.curp',
-                    'fun.cargo','fun.correo', 'org.nombre', 'fun.incapacidad')
-                    ->join('tbl_funcionarios AS fun', 'fun.id','org.id')
-                    ->where('fun.id', $id_firmante)
-                    ->first();
+                        ->Select(
+                            'org.id',
+                            'fun.nombre AS funcionario',
+                            'fun.curp',
+                            'fun.cargo',
+                            'fun.correo',
+                            'org.nombre',
+                            'fun.incapacidad'
+                        )
+                        ->join('tbl_funcionarios AS fun', 'fun.id', 'org.id')
+                        ->where('fun.id', $id_firmante)
+                        ->first();
 
-                    if ($dataIncapacidad != null) {$result = $dataIncapacidad;}
-                    else{return redirect()->route('firma.inicio')->with('danger', 'NO SE ENCONTRON DATOS DE LA PERSONA QUE TOMARÁ EL LUGAR DEL ACADEMICO!');}
-
-                }else{
+                    if ($dataIncapacidad != null) {
+                        $result = $dataIncapacidad;
+                    } else {
+                        return redirect()->route('firma.inicio')->with('danger', 'NO SE ENCONTRON DATOS DE LA PERSONA QUE TOMARÁ EL LUGAR DEL ACADEMICO!');
+                    }
+                } else {
                     ##Historial
-                    $fecha_busqueda = 'Ini:'. $fecha_ini .'/Fin:'. $fecha_fin .'/IdFun:'. $id_firmante;
+                    $fecha_busqueda = 'Ini:' . $fecha_ini . '/Fin:' . $fecha_fin . '/IdFun:' . $id_firmante;
                     $clave_ar = array_search($fecha_busqueda, $historial);
 
-                    if($clave_ar === false){ ##No esta en el historial entonces guardamos
+                    if ($clave_ar === false) { ##No esta en el historial entonces guardamos
                         $historial[] = $fecha_busqueda;
                         ##guardar en la bd el nuevo array en el campo historial del json
                         try {
@@ -510,16 +561,15 @@ class CalificacionesController extends Controller {
                         } catch (\Throwable $th) {
                             return redirect()->route('firma.inicio')->with('danger', 'Error: ' . $th->getMessage());
                         }
-
                     }
                 }
             }
-
         }
         return $result;
     }
 
-    public function generarToken() {
+    public function generarToken()
+    {
         ##Producción
         $resToken = Http::withHeaders([
             'Accept' => 'application/json'
@@ -544,11 +594,12 @@ class CalificacionesController extends Controller {
     }
 
     // obtener la cadena original
-    public function getCadenaOriginal($xmlBase64, $token) {
+    public function getCadenaOriginal($xmlBase64, $token)
+    {
         ##Produccion
         $response1 = Http::withHeaders([
             'Accept' => 'application/json',
-            'Authorization' => 'Bearer '.$token,
+            'Authorization' => 'Bearer ' . $token,
         ])->post('https://api.firma.chiapas.gob.mx/FEA/v2/Tools/generar_cadena_original', [
             'xml_OriginalBase64' => $xmlBase64
         ]);
