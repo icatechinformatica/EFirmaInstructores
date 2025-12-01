@@ -83,10 +83,7 @@ class CalificacionesController extends Controller
         $clave = $request->clave;
         if ($request->calificacion) {
             foreach ($request->calificacion as $key => $val) {
-                // if (!is_numeric($val) or $val < 6)  $val = "NP";
-                if ((!is_numeric($val) or $val < 6) && $val != 0) {
-                    $val = "NP";
-                }
+                if (!is_numeric($val) or $val < 6)  $val = "NP";
                 $result = DB::connection('pgsql')
                     ->table('tbl_inscripcion')
                     ->where('id_curso', $id_curso)
